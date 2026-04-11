@@ -1,0 +1,72 @@
+{
+  "header": {
+    "cv": "Curriculum Vitae",
+    "resume": "Resume"
+  },
+  "sections": {
+    "summary": "Professional Summary",
+    "experience": "Work Experience",
+    "education": "Education",
+    "skills": "Skills",
+    "certifications": "Certifications",
+    "languages": "Languages",
+    "references": "References"
+  },
+  "labels": {
+    "phone": "Phone",
+    "email": "Email",
+    "location": "Location",
+    "linkedin": "LinkedIn",
+    "website": "Website",
+    "present": "Present",
+    "gpa": "GPA",
+    "honors": "Honors",
+    "referencesAvailable": "References available upon request."
+  },
+  "prompts": {
+    "languageSelect": "Select CV language",
+    "fullName": "Full name",
+    "jobTitle": "Job title / Professional headline",
+    "emailAddress": "Email address",
+    "phoneNumber": "Phone number",
+    "locationCity": "Location (City, Country)",
+    "linkedinUrl": "LinkedIn URL (optional)",
+    "websiteUrl": "Website URL (optional)",
+    "summaryText": "Write your professional summary (2-3 sentences)",
+    "addExperience": "Add a work experience entry?",
+    "companyName": "Company name",
+    "roleTitle": "Role / Job title",
+    "startDate": "Start date (e.g. Jan 2020)",
+    "endDate": "End date (e.g. Dec 2023, or 'Present')",
+    "achievement": "Add an achievement/responsibility bullet point (or press Enter to finish)",
+    "addMoreExperience": "Add another work experience?",
+    "addEducation": "Add an education entry?",
+    "institution": "Institution name",
+    "degree": "Degree and field of study",
+    "eduStartDate": "Start year",
+    "eduEndDate": "End year (or 'Present')",
+    "eduDetails": "Additional details (GPA, honors, etc. - optional)",
+    "addMoreEducation": "Add another education entry?",
+    "skillsInput": "Enter your skills (comma-separated)",
+    "addCertifications": "Add certifications?",
+    "certName": "Certification name",
+    "certIssuer": "Issuing organization",
+    "certDate": "Date obtained",
+    "addMoreCerts": "Add another certification?",
+    "addLanguages": "Add spoken languages?",
+    "langName": "Language",
+    "langLevel": "Proficiency level",
+    "addMoreLangs": "Add another language?",
+    "outputFormats": "Select output format(s)",
+    "generating": "Generating your CV...",
+    "done": "CV generated successfully!",
+    "savedTo": "Saved to"
+  },
+  "proficiency": {
+    "native": "Native",
+    "fluent": "Fluent",
+    "advanced": "Advanced",
+    "intermediate": "Intermediate",
+    "basic": "Basic"
+  }
+}

@@ -1,0 +1,57 @@
+node_modules/
+output/
+.agents/
+.opencode/
+.playwright-cli/
+.convex/
+
+# Next.js
+.next/
+out/
+
+# Convex
+convex/_generated/
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Debug & temp files
+*.txt
+*.tgz
+_set_jwt_key.*
+_gen_jwks.*
+_temp_*
+_helper_*
+tsconfig.tsbuildinfo
+
+# Screenshots & test artifacts
+*.png
+signin.html
+signin_utf8.html
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Misc / non-project
+*.zip
+everything-claude-code-main/
+skilstoinstall/
+UI/
+stitch/
+docs/
+capture_convex.js
+groq-test.js
+test-poll.js
+take_screenshots.js
+delivery_platform_master_prompt.md
+optimized_bug_fix_prompt.md

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #111111;
+    direction: ltr;
+    text-align: left;
+    line-height: 1.55;
+    width: 210mm;
+    min-height: 297mm;
+    background: #ffffff;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 42px 50px 40px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .name {
+    font-size: 24pt;
+    font-weight: bold;
+    color: #000000;
+    margin-bottom: 4px;
+    line-height: 1.15;
+  }
+
+  .job-title {
+    font-size: 12pt;
+    color: #444444;
+    margin-bottom: 6px;
+  }
+
+  .contact-line {
+    font-size: 10pt;
+    color: #222222;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .contact-item,
+  .contact-separator,
+  .inline-item,
+  .inline-separator {
+    display: inline;
+  }
+
+  .contact-separator,
+  .inline-separator,
+  .entry-separator {
+    color: #555555;
+    margin: 0 6px;
+  }
+
+  .divider {
+    border: none;
+    border-top: 0.75px solid #cccccc;
+    margin: 10px 0 14px;
+  }
+
+  .section {
+    margin-top: 14px;
+  }
+
+  .section-heading {
+    font-size: 13pt;
+    font-weight: bold;
+    color: #000000;
+    margin-bottom: 5px;
+    padding-bottom: 4px;
+    border-bottom: 0.75px solid #cccccc;
+    page-break-after: avoid;
+  }
+
+  .body-text {
+    font-size: 11pt;
+    color: #222222;
+    text-align: left;
+  }
+
+  .entry {
+    margin-bottom: 10px;
+    page-break-inside: avoid;
+  }
+
+  .entry + .entry {
+    margin-top: 12px;
+  }
+
+  .entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 3px;
+  }
+
+  .entry-main {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .entry-role {
+    display: inline;
+    font-size: 11pt;
+    font-weight: bold;
+    color: #000000;
+  }
+
+  .entry-company {
+    display: inline;
+    font-size: 11pt;
+    color: #222222;
+  }
+
+  .entry-company::before {
+    content: '|';
+    margin: 0 6px;
+    color: #7f8c92;
+  }
+
+  .entry-date {
+    flex: 0 0 auto;
+    min-width: 115px;
+    font-size: 10pt;
+    color: #555555;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .achievements,
+  .cert-bullet {
+    margin: 4px 0 0 16px;
+    padding: 0;
+  }
+
+  .achievements li,
+  .cert-bullet li {
+    font-size: 11pt;
+    color: #222222;
+    margin-bottom: 2px;
+    line-height: 1.5;
+  }
+
+  .edu-details {
+    font-size: 10pt;
+    color: #555555;
+    margin-top: 2px;
+    margin-left: 2px;
+  }
+
+  .inline-list {
+    font-size: 11pt;
+    color: #222222;
+    text-align: left;
+    line-height: 1.6;
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: minmax(160px, 0.34fr) minmax(0, 0.66fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .sidebar {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #12313A 0%, #163942 100%);
+    color: #EEF7F8;
+  }
+
+  .sidebar .section {
+    margin-top: 0;
+  }
+
+  .sidebar .section-heading {
+    color: #B7E4EA;
+    border-bottom: none;
+    margin-bottom: 2px;
+    padding-bottom: 0;
+  }
+
+  .sidebar .body-text,
+  .sidebar .inline-list,
+  .sidebar .achievements li,
+  .sidebar .cert-bullet li,
+  .sidebar .contact-stack-item {
+    color: inherit;
+  }
+
+  .sidebar .achievements,
+  .sidebar .cert-bullet {
+    margin-left: 16px;
+  }
+
+  .main-content {
+    display: grid;
+    gap: 2px;
+  }
+
+  .contact-stack {
+    display: grid;
+    gap: 6px;
+  }
+
+  .contact-stack-item {
+    font-size: 10pt;
+    line-height: 1.6;
+    word-break: break-word;
+  }
+
+  .template-harvard {
+    font-family: "Times New Roman", Georgia, serif;
+  }
+
+  .template-harvard .header {
+    text-align: left;
+  }
+
+  .template-harvard .divider {
+    border-top-color: rgba(122, 98, 72, 0.42);
+    border-top-width: 1.2px;
+  }
+
+  .template-harvard .section-heading {
+    color: #433324;
+    border-bottom-color: rgba(122, 98, 72, 0.36);
+  }
+
+  .template-harvard .job-title {
+    color: #685748;
+  }
+
+  .template-harvard .entry-company::before {
+    content: '·';
+  }
+
+  .template-ada .header {
+    text-align: left;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 0.75px solid #CFDCE0;
+  }
+
+  .template-ada .name {
+    color: #0F2630;
+  }
+
+  .template-ada .job-title {
+    color: #35535B;
+  }
+
+  .template-ada .section-heading {
+    color: #15313A;
+    border-bottom-color: rgba(21, 49, 58, 0.16);
+  }
+</style>
+</head>
+<body class="{{templateClass}}">
+<div class="page {{templateClass}}">
+
+<div class="header">
+  <div class="name">{{fullName}}</div>
+  {{#jobTitle}}<div class="job-title">{{jobTitle}}</div>{{/jobTitle}}
+  {{#showContactLine}}<div class="contact-line">{{contactLineHtml}}</div>{{/showContactLine}}
+</div>
+
+{{#isSingle}}
+<hr class="divider">
+
+{{#summary}}
+<section class="section">
+  <div class="section-heading">{{sectionSummary}}</div>
+  <div class="body-text">{{summary}}</div>
+</section>
+{{/summary}}
+
+{{#hasExperience}}
+<section class="section">
+  <div class="section-heading">{{sectionExperience}}</div>
+  {{#experience}}
+  <div class="entry">
+    <div class="entry-header">
+      <div class="entry-main">
+        <span class="entry-role">{{role}}</span>
+        <span class="entry-company">{{company}}</span>
+      </div>
+      <div class="entry-date">{{dateRange}}</div>
+    </div>
+    {{#hasAchievements}}
+    <ul class="achievements">
+      {{#achievements}}
+      <li>{{.}}</li>
+      {{/achievements}}
+    </ul>
+    {{/hasAchievements}}
+  </div>
+  {{/experience}}
+</section>
+{{/hasExperience}}
+
+{{#hasEducation}}
+<section class="section">
+  <div class="section-heading">{{sectionEducation}}</div>
+  {{#education}}
+  <div class="entry">
+    <div class="entry-header">
+      <div class="entry-main">
+        <span class="entry-role">{{degree}}</span>
+        <span class="entry-company">{{institution}}</span>
+      </div>
+      {{#dateStr}}<div class="entry-date">{{dateStr}}</div>{{/dateStr}}
+    </div>
+    {{#details}}<div class="edu-details">{{details}}</div>{{/details}}
+  </div>
+  {{/education}}
+</section>
+{{/hasEducation}}
+
+{{#hasSkills}}
+<section class="section">
+  <div class="section-heading">{{sectionSkills}}</div>
+  <div class="inline-list">{{skillsHtml}}</div>
+</section>
+{{/hasSkills}}
+
+{{#hasCertifications}}
+<section class="section">
+  <div class="section-heading">{{sectionCertifications}}</div>
+  <ul class="cert-bullet">
+    {{#certifications}}
+    <li>{{.}}</li>
+    {{/certifications}}
+  </ul>
+</section>
+{{/hasCertifications}}
+
+{{#hasLanguages}}
+<section class="section">
+  <div class="section-heading">{{sectionLanguages}}</div>
+  <div class="inline-list">{{languagesHtml}}</div>
+</section>
+{{/hasLanguages}}
+{{/isSingle}}
+
+{{#isAda}}
+<div class="content-grid">
+  <aside class="sidebar">
+    {{#hasContactStack}}
+    <section class="section">
+      <div class="section-heading">{{sectionContact}}</div>
+      <div class="contact-stack">{{contactStackHtml}}</div>
+    </section>
+    {{/hasContactStack}}
+
+    {{#hasSkills}}
+    <section class="section">
+      <div class="section-heading">{{sectionSkills}}</div>
+      <div class="inline-list">{{skillsHtml}}</div>
+    </section>
+    {{/hasSkills}}
+
+    {{#hasCertifications}}
+    <section class="section">
+      <div class="section-heading">{{sectionCertifications}}</div>
+      <ul class="cert-bullet">
+        {{#certifications}}
+        <li>{{.}}</li>
+        {{/certifications}}
+      </ul>
+    </section>
+    {{/hasCertifications}}
+
+    {{#hasLanguages}}
+    <section class="section">
+      <div class="section-heading">{{sectionLanguages}}</div>
+      <div class="inline-list">{{languagesHtml}}</div>
+    </section>
+    {{/hasLanguages}}
+  </aside>
+
+  <main class="main-content">
+    {{#summary}}
+    <section class="section">
+      <div class="section-heading">{{sectionSummary}}</div>
+      <div class="body-text">{{summary}}</div>
+    </section>
+    {{/summary}}
+
+    {{#hasExperience}}
+    <section class="section">
+      <div class="section-heading">{{sectionExperience}}</div>
+      {{#experience}}
+      <div class="entry">
+        <div class="entry-header">
+          <div class="entry-main">
+            <span class="entry-role">{{role}}</span>
+            <span class="entry-company">{{company}}</span>
+          </div>
+          <div class="entry-date">{{dateRange}}</div>
+        </div>
+        {{#hasAchievements}}
+        <ul class="achievements">
+          {{#achievements}}
+          <li>{{.}}</li>
+          {{/achievements}}
+        </ul>
+        {{/hasAchievements}}
+      </div>
+      {{/experience}}
+    </section>
+    {{/hasExperience}}
+
+    {{#hasEducation}}
+    <section class="section">
+      <div class="section-heading">{{sectionEducation}}</div>
+      {{#education}}
+      <div class="entry">
+        <div class="entry-header">
+          <div class="entry-main">
+            <span class="entry-role">{{degree}}</span>
+            <span class="entry-company">{{institution}}</span>
+          </div>
+          {{#dateStr}}<div class="entry-date">{{dateStr}}</div>{{/dateStr}}
+        </div>
+        {{#details}}<div class="edu-details">{{details}}</div>{{/details}}
+      </div>
+      {{/education}}
+    </section>
+    {{/hasEducation}}
+  </main>
+</div>
+{{/isAda}}
+
+</div>
+</body>
+</html>

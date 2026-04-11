@@ -1,0 +1,67 @@
+{
+  "name": "oc-cv-maker",
+  "version": "2.0.0",
+  "description": "AI-powered bilingual CV generator (English + Arabic) — web app with chat interview, PDF/DOCX export.",
+  "author": "Yusuf Imad",
+  "main": "src/index.js",
+  "bin": {
+    "cv-maker": "src/index.js"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm:dev:backend\" \"npm:dev:web\"",
+    "dev:web": "next dev",
+    "dev:backend": "convex dev",
+    "typegen": "next typegen",
+    "build": "next typegen && next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "cli": "node src/index.js",
+    "cli:generate": "node src/index.js",
+    "cli:test:en": "node src/index.js --from-json sample-data.json",
+    "cli:test:ar": "node src/index.js --from-json sample-data-ar.json",
+    "cli:test:ar:simple": "node src/index.js --from-json sample-data-ar-simple.json",
+    "cli:test:ar:marketing": "node src/index.js --from-json sample-data-ar-marketing.json",
+    "cli:test:all": "node src/index.js --from-json sample-data.json && node src/index.js --from-json sample-data-ar.json"
+  },
+  "keywords": [
+    "cv",
+    "resume",
+    "generator",
+    "ai",
+    "bilingual",
+    "arabic",
+    "nextjs"
+  ],
+  "license": "ISC",
+  "dependencies": {
+    "@convex-dev/auth": "^0.0.91",
+    "@fontsource-variable/manrope": "^5.2.8",
+    "@fontsource/tajawal": "^5.2.7",
+    "@inquirer/prompts": "^8.3.0",
+    "convex": "^1.35.1",
+    "docx": "^9.6.0",
+    "framer-motion": "^12.36.0",
+    "lucide-react": "^0.577.0",
+    "next": "^16.1.6",
+    "pdf-lib": "^1.17.1",
+    "puppeteer": "^24.37.5",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.1.7",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  }
+}

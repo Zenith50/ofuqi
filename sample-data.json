@@ -1,0 +1,92 @@
+{
+  "language": "en",
+  "personal": {
+    "fullName": "Khalid Youssef Al-Harbi",
+    "jobTitle": "Senior Civil Engineer",
+    "email": "khalid.harbi@email.com",
+    "phone": "+966 56 789 1234",
+    "location": "Riyadh, Saudi Arabia",
+    "linkedin": "linkedin.com/in/khalidharbi"
+  },
+  "summary": "Senior Civil Engineer with over 8 years of experience managing and executing infrastructure, commercial, and residential construction projects. Skilled in site supervision, quality control, and contractor management with a strong track record of delivering projects on time and within budget.",
+  "experience": [
+    {
+      "company": "Advanced Construction Co.",
+      "role": "Senior Civil Engineer",
+      "startDate": "April 2020",
+      "endDate": "Present",
+      "achievements": [
+        "Supervised execution of 3 residential projects worth over SAR 45 million, delivering all within the scheduled timeline.",
+        "Led a site supervision team of 8 engineers and technicians, ensuring strict compliance with quality and safety standards.",
+        "Reduced material costs by 12% through renegotiation with suppliers and optimized delivery schedules.",
+        "Developed a digital weekly reporting system linking field progress to budget and schedule for executive review."
+      ]
+    },
+    {
+      "company": "Dar Al-Handasah Group",
+      "role": "Civil Engineer",
+      "startDate": "June 2017",
+      "endDate": "March 2020",
+      "achievements": [
+        "Participated in the design and review of structural drawings for 5 multi-story commercial buildings.",
+        "Prepared technical feasibility studies for infrastructure projects that helped secure contracts worth SAR 20 million.",
+        "Coordinated with consultants and contractors to resolve 40 technical issues during execution phases without delays.",
+        "Streamlined the monthly payment certificate review process, reducing approval time from 15 days to 7."
+      ]
+    },
+    {
+      "company": "Al-Rakeezah Engineering Consultants",
+      "role": "Junior Civil Engineer",
+      "startDate": "September 2015",
+      "endDate": "May 2017",
+      "achievements": [
+        "Conducted field soil and concrete tests and prepared quality reports for over 12 projects.",
+        "Assisted in preparing BOQ and specifications for road and bridge tenders.",
+        "Monitored foundation and waterproofing works for 3 major residential developments."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "King Fahd University of Petroleum and Minerals",
+      "degree": "Bachelor of Civil Engineering",
+      "startDate": "2011",
+      "endDate": "2015",
+      "details": "Graduation project on seismic load analysis for reinforced concrete structures in the western region."
+    }
+  ],
+  "skills": [
+    "Construction Project Management",
+    "Site Supervision",
+    "AutoCAD",
+    "Revit",
+    "Primavera P6",
+    "SAP2000",
+    "Structural Drawing Interpretation",
+    "Quality Control and Safety",
+    "Payment Certificates and Reports",
+    "Contractor and Vendor Management"
+  ],
+  "certifications": [
+    {
+      "name": "Project Management Professional (PMP)",
+      "issuer": "PMI",
+      "date": "2023"
+    },
+    {
+      "name": "Saudi Council of Engineers Membership",
+      "issuer": "Saudi Council of Engineers",
+      "date": "2015"
+    }
+  ],
+  "languages": [
+    {
+      "name": "Arabic",
+      "level": "Native"
+    },
+    {
+      "name": "English",
+      "level": "Advanced"
+    }
+  ]
+}

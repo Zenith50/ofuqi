@@ -58,16 +58,9 @@ async function generatePdf(data, locale, outputPath, templateKey = 'ats') {
 
 function buildPdfHtml(data, locale, templatePreset) {
   const templateFileName = data.language === 'ar' ? 'cv-template-ar.html' : 'cv-template-en.html';
-  const templatePathCandidates = [
-    path.join(__dirname, '..', 'template', templateFileName),
-    path.join(process.cwd(), 'src', 'template', templateFileName)
-  ];
-  const templatePath = templatePathCandidates.find(candidate => fs.existsSync(candidate));
-
-  if (!templatePath) {
-    throw new Error(`PDF template not found: ${templateFileName}`);
-  }
-
+  // Vercel serverless functions require absolute paths via process.cwd()
+  const templatePath = path.join(process.cwd(), 'src', 'template', templateFileName);
+  
   let html = fs.readFileSync(templatePath, 'utf-8');
   html = injectFontPaths(html);
 
@@ -182,22 +175,23 @@ function getContactParts(data) {
 }
 
 function injectFontPaths(html) {
-  const rootDirCandidates = [
-    path.join(__dirname, '..', '..'),
-    process.cwd()
-  ];
-  const rootDir = rootDirCandidates.find(candidate => fs.existsSync(path.join(candidate, 'fonts')));
+  const fontDir = path.join(process.cwd(), 'fonts');
 
-  if (!rootDir) {
+  try {
+    // Inject fonts as Base64 data URIs to bypass Chromium file:// security blocks
+    const regularBase64 = fs.readFileSync(path.join(fontDir, PDF_FONTS.regular)).toString('base64');
+    const boldBase64 = fs.readFileSync(path.join(fontDir, PDF_FONTS.bold)).toString('base64');
+
+    const fontRegularPath = `data:font/ttf;base64,${regularBase64}`;
+    const fontBoldPath = `data:font/ttf;base64,${boldBase64}`;
+
+    return html
+      .replace(/\{\{fontRegularPath\}\}/g, fontRegularPath)
+      .replace(/\{\{fontBoldPath\}\}/g, fontBoldPath);
+  } catch (error) {
+    console.error("Failed to inject fonts:", error);
     return html;
   }
-
-  const fontRegularPath = 'file:///' + path.join(rootDir, PDF_FONTS.regular).replace(/\\/g, '/');
-  const fontBoldPath = 'file:///' + path.join(rootDir, PDF_FONTS.bold).replace(/\\/g, '/');
-
-  return html
-    .replace(/\{\{fontRegularPath\}\}/g, fontRegularPath)
-    .replace(/\{\{fontBoldPath\}\}/g, fontBoldPath);
 }
 
 function replaceConditionalBlock(template, blockName, isEnabled) {

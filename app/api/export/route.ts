@@ -1,4 +1,3 @@
-import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
@@ -6,11 +5,12 @@ import { NextResponse } from "next/server";
 import { getGeneratorLocale, safeDownloadName, type CvData } from "@/lib/cv/demoData";
 import { resolveCvProjectTemplateKey } from "@/lib/cv/templates";
 
-export const runtime = "nodejs";
+// Import directly; Next.js handles CJS/ESM interop.
+import { generatePdf } from "@/src/generators/pdf";
+import { generateDocx } from "@/src/generators/docx";
 
-const require = createRequire(import.meta.url);
-const { generateDocx } = require("../../../src/generators/docx.js");
-const { generatePdf } = require("../../../src/generators/pdf.js");
+export const runtime = "nodejs";
+export const maxDuration = 60; // Allow enough time for Sparticuz to download and extract Chromium
 
 type ExportFormat = "pdf" | "docx";
 

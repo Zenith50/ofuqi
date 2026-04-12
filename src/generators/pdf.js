@@ -9,16 +9,32 @@ async function generatePdf(data, locale, outputPath, templateKey = 'ats') {
   const templatePreset = getTemplatePreset(resolvedTemplateKey);
   const html = buildPdfHtml(data, locale, templatePreset);
 
-  const puppeteer = require('puppeteer');
   let browser;
 
   try {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
-      timeout: 120000,
-      protocolTimeout: 120000
-    });
+    const isVercel = process.env.VERCEL === '1';
+
+    if (isVercel) {
+      const puppeteer = require('puppeteer-core');
+      const chromium = require('@sparticuz/chromium-min');
+
+      browser = await puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(
+          'https://github.com/Sparticuz/chromium/releases/download/v134.0.0/chromium-v134.0.0-pack.tar'
+        ),
+        headless: chromium.headless,
+      });
+    } else {
+      const puppeteer = require('puppeteer');
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+        timeout: 120000,
+        protocolTimeout: 120000
+      });
+    }
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });

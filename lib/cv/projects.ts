@@ -350,10 +350,11 @@ export function resolveLegacyDraftRoute(draftId: string | null | undefined) {
   return draftId ? legacyDraftRoutes[draftId] ?? null : null;
 }
 
-export function createStarterCvProject(templateKey: CvProjectTemplateKey = "ats"): DemoCvProject {
+export function createStarterCvProject(templateKey: CvProjectTemplateKey = "ats", locale?: AppLocale | null): DemoCvProject {
   const resolvedTemplateKey = resolveCvProjectTemplateKey(templateKey) ?? "ats";
+  const resolvedLanguage = locale ?? "en";
   
-  const emptyData: CvData = { language: "en", personal: { fullName: "", jobTitle: "", email: "", phone: "", location: "", linkedin: "", website: "" }, summary: "", experience: [], education: [], skills: [], languages: [], certifications: [] };
+  const emptyData: CvData = { language: resolvedLanguage, personal: { fullName: "", jobTitle: "", email: "", phone: "", location: "", linkedin: "", website: "" }, summary: "", experience: [], education: [], skills: [], languages: [], certifications: [] };
 
   return {
     id: `starter-${resolvedTemplateKey}`,
@@ -361,10 +362,10 @@ export function createStarterCvProject(templateKey: CvProjectTemplateKey = "ats"
       templateKey: resolvedTemplateKey,
       statusKey: "draft",
       updatedKey: "today",
-      defaultLanguage: "en",
+      defaultLanguage: resolvedLanguage,
       availableLanguages: PROJECT_LANGUAGES,
     },
-    variant: { ...emptyData, language: "en" },
+    variant: emptyData,
     conversation: { messages: [], historyItems: [] },
   };
 }

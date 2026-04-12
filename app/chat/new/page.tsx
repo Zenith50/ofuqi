@@ -120,7 +120,7 @@ export default function NewChatPage() {
     // Guard: wait for user to be fully loaded (not just resolved). `user` must be truthy (not null/undefined).
     if (!urlProjectId && !createAttempted.current && user) {
       createAttempted.current = true;
-      const starterProject = createStarterCvProject(selectedTemplateKey);
+      const starterProject = createStarterCvProject(selectedTemplateKey, initLocaleRef.current);
       
       createProjectMutation({
         templateKey: starterProject.shared.templateKey,

@@ -44,6 +44,7 @@
     "@fontsource/tajawal": "^5.2.7",
     "@inquirer/prompts": "^8.3.0",
     "@sparticuz/chromium-min": "^147.0.0",
+    "@vercel/analytics": "^2.0.1",
     "convex": "^1.35.1",
     "docx": "^9.6.0",
     "framer-motion": "^12.36.0",

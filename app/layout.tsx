@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import { Analytics } from "@vercel/analytics/react";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import ConvexClientProvider from "@/components/providers/ConvexClientProvider";
 import { APP_LOCALE_COOKIE_NAME, appCopy, isAppLocale, type AppLocale } from "@/lib/app/content";
@@ -28,6 +29,7 @@ export default async function RootLayout({
         <ConvexAuthNextjsServerProvider>
           <ConvexClientProvider initialLocale={initialLocale} allowStoredLocaleOverride={!hasLocaleCookie}>
             {children}
+            <Analytics />
           </ConvexClientProvider>
         </ConvexAuthNextjsServerProvider>
       </body>

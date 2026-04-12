@@ -68,6 +68,7 @@ export async function POST(request: Request) {
       await fs.rm(tempDirectory, { recursive: true, force: true });
     }
   } catch (error) {
+    console.error("[Export Error]:", error);
     const message = error instanceof Error ? error.message : "Unknown export error.";
     return NextResponse.json({ error: message }, { status: 500 });
   }

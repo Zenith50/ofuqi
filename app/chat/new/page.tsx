@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
@@ -53,6 +53,18 @@ function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: numb
 }
 
 export default function NewChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="editor-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <TextShimmer>Loading editor...</TextShimmer>
+      </div>
+    }>
+      <NewChatPageContent />
+    </Suspense>
+  );
+}
+
+function NewChatPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useQuery(api.users.current);
@@ -274,7 +286,7 @@ export default function NewChatPage() {
       let finalHistoryItems = tempSessionState.historyItems;
       let cleanedAssistantBody = assistantBody;
 
-      const jsonMatch = assistantBody.match(/```json\n([\s\S]*?)\n```/);
+      const jsonMatch = assistantBody.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i);
       if (jsonMatch) {
          try {
            const parsed = JSON.parse(jsonMatch[1]);

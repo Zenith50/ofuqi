@@ -19,13 +19,12 @@ async function generatePdf(data, locale, outputPath, templateKey = 'ats') {
       const chromium = require('@sparticuz/chromium-min');
 
       browser = await puppeteer.launch({
-        args: [...chromium.args, '--hide-scrollbars', '--disable-web-security', '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        args: [...chromium.args, '--hide-scrollbars', '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
         defaultViewport: chromium.defaultViewport,
         executablePath: await chromium.executablePath(
           'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
         ),
         headless: chromium.headless,
-        ignoreHTTPSErrors: true,
       });
     } else {
       const puppeteer = require('puppeteer');

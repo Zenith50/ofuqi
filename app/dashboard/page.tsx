@@ -14,7 +14,6 @@ import { downloadCv } from "@/lib/cv/downloadClient";
 import {
   buildWorkspaceHref,
   convexRowToProject,
-  resolveProjectLanguage,
   type DemoCvProject,
 } from "@/lib/cv/projects";
 

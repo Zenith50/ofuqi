@@ -20,16 +20,44 @@ export type CvProjectSharedMetadata = {
   availableLanguages: AppLocale[];
 };
 
+export type CvProjectMessage = {
+  role: "assistant" | "user";
+  body: string;
+  language: AppLocale;
+  seedKey?: "welcome" | "userExample" | "followUp";
+};
+
 export type DemoCvProject = {
   id: string;
   shared: CvProjectSharedMetadata;
   variant: CvData;
-  conversation: { messages: any[], historyItems: string[] };
-  translationCache?: CvData;
+  conversation: { messages: CvProjectMessage[]; historyItems: string[] };
+  translationCache?: unknown;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ConvexCvProjectRow = Record<string, any>;
+export type ConvexCvProjectRow = Record<string, unknown>;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function readMessages(value: unknown): CvProjectMessage[] {
+  if (!isRecord(value) || !Array.isArray(value.messages)) return [];
+
+  return value.messages.filter((message): message is CvProjectMessage => {
+    if (!isRecord(message)) return false;
+    const role = message.role === "assistant" || message.role === "user";
+    const language = message.language === "en" || message.language === "ar";
+    const seedKey = message.seedKey === undefined || message.seedKey === "welcome" || message.seedKey === "userExample" || message.seedKey === "followUp";
+    return role && language && seedKey && typeof message.body === "string";
+  });
+}
+
+function readHistoryItems(value: unknown): string[] {
+  return isRecord(value) && Array.isArray(value.historyItems)
+    ? value.historyItems.filter((item): item is string => typeof item === "string")
+    : [];
+}
 
 function computeUpdatedKey(updatedAt: number): CvProjectUpdatedKey {
   const now = Date.now();
@@ -40,7 +68,7 @@ function computeUpdatedKey(updatedAt: number): CvProjectUpdatedKey {
 }
 
 export function convexRowToProject(row: ConvexCvProjectRow): DemoCvProject {
-  const defaultLang = (row.defaultLanguage ?? "en") as AppLocale;
+  const defaultLang = (row.defaultLanguage === "ar" || row.defaultLanguage === "en" ? row.defaultLanguage : "en") as AppLocale;
   const legacyVariant = defaultLang === "ar" ? row.variantAr : row.variantEn;
   const legacyConversation = defaultLang === "ar" ? row.conversationAr : row.conversationEn;
 
@@ -49,14 +77,14 @@ export function convexRowToProject(row: ConvexCvProjectRow): DemoCvProject {
     shared: {
       templateKey: (row.templateKey ?? "ats") as CvProjectTemplateKey,
       statusKey: (row.statusKey ?? "draft") as CvProjectStatusKey,
-      updatedKey: computeUpdatedKey(row.updatedAt ?? Date.now()),
+      updatedKey: computeUpdatedKey(typeof row.updatedAt === "number" ? row.updatedAt : Date.now()),
       defaultLanguage: defaultLang,
-      availableLanguages: (row.availableLanguages ?? ["en", "ar"]) as AppLocale[],
+      availableLanguages: Array.isArray(row.availableLanguages) ? (row.availableLanguages as AppLocale[]) : ["en", "ar"],
     },
     variant: (row.variant ?? legacyVariant ?? { language: defaultLang, personal: { fullName: "", jobTitle: "" }, summary: "", experience: [], education: [], skills: [] }) as CvData,
     conversation: {
-      messages: row.conversation?.messages || legacyConversation?.messages || [],
-      historyItems: row.conversation?.historyItems || legacyConversation?.historyItems || []
+      messages: readMessages(row.conversation).length > 0 ? readMessages(row.conversation) : readMessages(legacyConversation),
+      historyItems: readHistoryItems(row.conversation).length > 0 ? readHistoryItems(row.conversation) : readHistoryItems(legacyConversation)
     },
     translationCache: row.translationCache as CvData | undefined,
   };
@@ -92,11 +120,11 @@ function createProject(project: DemoCvProject): DemoCvProject {
 }
 
 const englishEngineer = sampleEnglish as CvData;
-const arabicEngineer = sampleArabicEngineer as CvData;
+export const arabicEngineer = sampleArabicEngineer as CvData;
 const arabicSales = sampleArabicSales as CvData;
 const arabicMarketing = sampleArabicMarketing as CvData;
 
-const englishSales: CvData = {
+export const englishSales: CvData = {
   language: "en",
   personal: {
     fullName: "Abdullah Mohammed Al-Shamri",
@@ -190,7 +218,7 @@ const englishSales: CvData = {
   ],
 };
 
-const englishMarketing: CvData = {
+export const englishMarketing: CvData = {
   language: "en",
   personal: {
     fullName: "Reem Khalid Al-Otaibi",
@@ -292,7 +320,7 @@ const englishMarketing: CvData = {
   ],
 };
 
-const demoProjects = [
+export const demoProjects = [
   createProject({
     id: "khalid-engineer",
     shared: {
@@ -388,7 +416,7 @@ export function resolveProjectLanguage(
   return project.shared.defaultLanguage;
 }
 
-export function getProjectVariant(project: DemoCvProject, language?: AppLocale) {
+export function getProjectVariant(project: DemoCvProject) {
   return project.variant;
 }
 

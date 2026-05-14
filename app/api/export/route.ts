@@ -2,8 +2,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import { NextResponse } from "next/server";
+import { isAuthenticatedNextjs } from "@convex-dev/auth/nextjs/server";
+
+import { readJsonBody, parseExportRequestPayload, RequestValidationError } from "@/lib/api/validation";
 import { getGeneratorLocale, safeDownloadName, type CvData } from "@/lib/cv/demoData";
-import { resolveCvProjectTemplateKey } from "@/lib/cv/templates";
 
 // Import directly; Next.js handles CJS/ESM interop.
 import { generatePdf } from "@/src/generators/pdf";
@@ -11,12 +13,6 @@ import { generateDocx } from "@/src/generators/docx";
 
 export const runtime = "nodejs";
 export const maxDuration = 60; // Allow enough time for Sparticuz to download and extract Chromium
-
-type ExportFormat = "pdf" | "docx";
-
-function isSupportedFormat(value: unknown): value is ExportFormat {
-  return value === "pdf" || value === "docx";
-}
 
 function createAsciiFilename(data: CvData, extension: string, templateKey: string) {
   const fallbackBase = data.language === "ar" ? "cv_ar" : "cv_en";
@@ -30,15 +26,11 @@ function createAsciiFilename(data: CvData, extension: string, templateKey: strin
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { data?: CvData; format?: ExportFormat; templateKey?: string };
-
-    if (!body.data || !isSupportedFormat(body.format)) {
-      return NextResponse.json({ error: "Invalid export payload." }, { status: 400 });
+    if (!(await isAuthenticatedNextjs())) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
 
-    const data = body.data;
-    const format = body.format;
-    const templateKey = resolveCvProjectTemplateKey(body.templateKey) ?? "ats";
+    const { data, format, templateKey } = parseExportRequestPayload(await readJsonBody(request));
     const locale = getGeneratorLocale(data.language === "ar" ? "ar" : "en");
     const extension = format === "pdf" ? "pdf" : "docx";
     const tempDirectory = await fs.mkdtemp(path.join(tmpdir(), "oc-cv-maker-"));
@@ -68,8 +60,11 @@ export async function POST(request: Request) {
       await fs.rm(tempDirectory, { recursive: true, force: true });
     }
   } catch (error) {
+    if (error instanceof RequestValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
     console.error("[Export Error]:", error);
-    const message = error instanceof Error ? error.message : "Unknown export error.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Export failed." }, { status: 500 });
   }
 }

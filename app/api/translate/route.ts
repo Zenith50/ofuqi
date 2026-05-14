@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
-import { smartCall, type ChatMessage } from "@/lib/llm/router";
+import { isAuthenticatedNextjs } from "@convex-dev/auth/nextjs/server";
 
-export const runtime = "edge";
+import { readJsonBody, parseTranslateRequestPayload, RequestValidationError } from "@/lib/api/validation";
+import { normalizeCvData } from "@/lib/cv/validation";
+import { smartCall, type ChatMessage } from "@/lib/llm/router";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { cvData, targetLanguage, existingTargetData } = body;
-
-    if (!cvData || !targetLanguage) {
-      return NextResponse.json({ error: "Missing payload" }, { status: 400 });
+    if (!(await isAuthenticatedNextjs())) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
 
+    const { cvData, targetLanguage, existingTargetData } = parseTranslateRequestPayload(await readJsonBody(req));
     const langLabel = targetLanguage === "ar" ? "Arabic" : "English";
     const hasExistingTarget = existingTargetData &&
       ((existingTargetData.experience?.length > 0) || (existingTargetData.summary?.length > 0));
@@ -71,14 +71,21 @@ RULES:
 
     try {
       const parsedData = JSON.parse(cleanJsonStr);
-      parsedData.language = targetLanguage;
-      return NextResponse.json(parsedData);
+      const normalizedData = normalizeCvData({ ...parsedData, language: targetLanguage });
+      if (!normalizedData) {
+        return NextResponse.json({ error: "Invalid JSON returned from LLM" }, { status: 502 });
+      }
+      return NextResponse.json(normalizedData);
     } catch {
-      console.error("[Translate API] JSON parse error. Raw LLM output:", response.content);
-      return NextResponse.json({ error: "Invalid JSON returned from LLM" }, { status: 500 });
+      console.error("[Translate API] JSON parse error.", { outputLength: response.content.length });
+      return NextResponse.json({ error: "Invalid JSON returned from LLM" }, { status: 502 });
     }
 
   } catch (error) {
+    if (error instanceof RequestValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
     console.error("[Translate API] Error:", error);
     return NextResponse.json({ error: "Translation failed" }, { status: 500 });
   }

@@ -17,8 +17,14 @@ export default defineConfig([
   {
     ignores: [
       ".convex/**",
+      ".claude/**",
+      ".opencode/**",
+      ".pi/**",
       "convex/_generated/**",
       "output/**",
+      "build-diagram*.js",
+      "capture_convex.js",
+      "groq-test.js",
     ],
   },
 ]);

@@ -15,8 +15,10 @@ async function generatePdf(data, locale, outputPath, templateKey = 'ats') {
     const isVercel = process.env.VERCEL === '1';
 
     if (isVercel) {
-      const puppeteer = require('puppeteer-core');
-      const chromium = require('@sparticuz/chromium-min');
+      const puppeteerModule = await import('puppeteer-core');
+      const chromiumModule = await import('@sparticuz/chromium-min');
+      const puppeteer = puppeteerModule.default ?? puppeteerModule;
+      const chromium = chromiumModule.default ?? chromiumModule;
 
       browser = await puppeteer.launch({
         args: [...chromium.args, '--hide-scrollbars', '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
@@ -27,7 +29,8 @@ async function generatePdf(data, locale, outputPath, templateKey = 'ats') {
         headless: chromium.headless,
       });
     } else {
-      const puppeteer = require('puppeteer');
+      const puppeteerModule = await import('puppeteer');
+      const puppeteer = puppeteerModule.default ?? puppeteerModule;
       browser = await puppeteer.launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],

@@ -63,6 +63,10 @@ function isAssistantUpdate(value: unknown): value is { _ofuqi_action: "update"; 
   );
 }
 
+function createMessageTimestamp() {
+  return Date.now();
+}
+
 export default function NewChatPage() {
   return (
     <Suspense fallback={
@@ -252,7 +256,7 @@ function NewChatPageContent() {
     setComposerValue("");
     setIsStreaming(true);
 
-    const tempUserMessage = { role: "user" as const, body: instruction, language: session.draftData.language, timestamp: Date.now() };
+    const tempUserMessage = { role: "user" as const, body: instruction, language: session.draftData.language, timestamp: createMessageTimestamp() };
     const messagesToSend = [...session.messages.map(m => ({ role: m.role, content: m.body })), { role: "user", content: instruction }];
     
     const tempSessionState = {
@@ -284,9 +288,8 @@ function NewChatPageContent() {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let assistantBody = "";
       
-      const startAssistantMsg = { role: "assistant" as const, body: "", language: session.draftData.language, timestamp: Date.now() };
+      const startAssistantMsg = { role: "assistant" as const, body: "", language: session.draftData.language, timestamp: createMessageTimestamp() };
       
       setSession((current) => {
         if (!current) return current;
@@ -296,25 +299,29 @@ function NewChatPageContent() {
         };
       });
 
-      while (true) {
+      const readAssistantBody = async (body: string): Promise<string> => {
         const { done, value } = await reader.read();
-        if (done) break;
-        
-        assistantBody += decoder.decode(value, { stream: true });
+        if (done) return body;
+
+        const nextBody = body + decoder.decode(value, { stream: true });
         
         setSession((current) => {
           if (!current) return current;
           const newMessages = [...current.messages];
           newMessages[newMessages.length - 1] = {
             ...newMessages[newMessages.length - 1],
-            body: assistantBody
+            body: nextBody
           };
           return {
             ...current,
             messages: newMessages
           };
         });
-      }
+
+        return readAssistantBody(nextBody);
+      };
+
+      const assistantBody = await readAssistantBody("");
 
       // Stream done - check for JSON patches
       let finalDraftData = tempSessionState.draftData;

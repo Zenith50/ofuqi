@@ -162,6 +162,16 @@ import type { Metadata } from "next";
 - Playwright runs against a built app (`npm run build && npm start`) on `http://127.0.0.1:3000`.
 - Screenshots on failure, traces retained on failure, no video recording.
 
+## Cursor Cloud specific instructions
+
+- Node.js 22 on the default image satisfies the Node 20+ requirement. Install with `npm ci` from `package-lock.json`.
+- Cloud agents have no Convex login. Start a local anonymous backend with `CONVEX_AGENT_MODE=anonymous` and `npx convex dev --typecheck disable </dev/null`. Redirecting stdin keeps the CLI from refreshing agent skills and rewriting `.claude/skills` and `skills-lock.json`. The dev command writes `NEXT_PUBLIC_CONVEX_URL` (port 3210) and `NEXT_PUBLIC_CONVEX_SITE_URL` (port 3211) into `.env.local`.
+- Sign-in needs these Convex deployment variables: `SITE_URL=http://127.0.0.1:3000`, `JWT_PRIVATE_KEY`, `JWKS`, and `AUTH_SECRET`. Generate an extractable RS256 key pair with the `jose` package and a random `AUTH_SECRET`, then set each value with `npx convex env set NAME value`. Pass `JWKS` as raw JSON on the command line. A dotenv `--from-file` value stores escaped quotes, and auth discovery then fails with `AuthProviderDiscoveryFailed` for port 3211. Skip generation when `npx convex env get JWT_PRIVATE_KEY` already returns a key.
+- `GROQ_API_KEY` is optional. The chat route tries Groq, then keyless Pollinations. Signup, the library, and creating a CV from a template work without it.
+- The environment start script brings up Convex and `next dev` on port 3000. `npm run dev` is the same pair when you need to restart them by hand.
+- `npm run typecheck` and `npm run test:unit` are the green checks. `npm run lint` currently reports existing errors in the repo.
+- Playwright's `webServer.command` is a Windows `cmd /c` script and `use.channel` is `chrome`. On Linux, Google Chrome is already installed; start the app yourself before running Playwright so `reuseExistingServer` can attach. `npm run cli:test:en` writes a PDF and DOCX under `output/`. PDF generation logs a missing `fonts/fonts/Amiri-Regular.ttf` path and still writes the file.
+
 <!-- convex-ai-start -->
 This project uses [Convex](https://convex.dev) as its backend.
 

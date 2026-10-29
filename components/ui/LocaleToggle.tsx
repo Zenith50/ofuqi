@@ -1,7 +1,8 @@
 "use client";
 
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
-import { getCopy } from "@/lib/app/content";
+import { getCopy, type AppLocale } from "@/lib/app/content";
 
 type LocaleToggleProps = {
   label?: string;
@@ -16,24 +17,16 @@ export default function LocaleToggle({ label, compact = false }: LocaleTogglePro
   return (
     <div className={`locale-toggle ${compact ? "locale-toggle--compact" : ""}`}>
       {label ? <span className="locale-toggle-label">{label}</span> : null}
-      <div className="locale-toggle-buttons" role="group" aria-label={ariaLabel}>
-        <button
-          type="button"
-          className={locale === "en" ? "active" : undefined}
-          onClick={() => setLocale("en")}
-          aria-pressed={locale === "en"}
-        >
-          EN
-        </button>
-        <button
-          type="button"
-          className={locale === "ar" ? "active" : undefined}
-          onClick={() => setLocale("ar")}
-          aria-pressed={locale === "ar"}
-        >
-          AR
-        </button>
-      </div>
+      <SegmentedControl<AppLocale>
+        compact={compact}
+        ariaLabel={ariaLabel}
+        value={locale}
+        onChange={setLocale}
+        options={[
+          { value: "en", label: "EN" },
+          { value: "ar", label: "AR" },
+        ]}
+      />
     </div>
   );
 }

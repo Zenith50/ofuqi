@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { Analytics } from "@vercel/analytics/react";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import ConvexClientProvider from "@/components/providers/ConvexClientProvider";
+import SkipLink from "@/components/shell/SkipLink";
 import { APP_LOCALE_COOKIE_NAME, appCopy, isAppLocale, type AppLocale } from "@/lib/app/content";
 import "./globals.css";
 
@@ -28,6 +29,7 @@ export default async function RootLayout({
       <body data-locale={initialLocale}>
         <ConvexAuthNextjsServerProvider>
           <ConvexClientProvider initialLocale={initialLocale} allowStoredLocaleOverride={!hasLocaleCookie}>
+            <SkipLink />
             {children}
             <Analytics />
           </ConvexClientProvider>

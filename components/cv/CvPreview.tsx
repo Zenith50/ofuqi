@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import { getPreviewContact, type CvData, type GeneratorLocale } from "@/lib/cv/demoData";
 import { formatCertification, formatDateRange, formatLanguageLevel } from "@/lib/cv/presentation";
 import type { CvProjectTemplateKey } from "@/lib/cv/templates";
@@ -11,7 +11,7 @@ type CvPreviewProps = {
   templateKey: CvProjectTemplateKey;
 };
 
-export default function CvPreview({ data, previewLocale, templateKey }: CvPreviewProps) {
+function CvPreview({ data, previewLocale, templateKey }: CvPreviewProps) {
   const isArabic = data.language === "ar";
   const contactItems = getPreviewContact(data);
   const rootClassName = [
@@ -27,7 +27,7 @@ export default function CvPreview({ data, previewLocale, templateKey }: CvPrevie
       <div className={rootClassName}>
         <header className="preview-paper-header preview-paper-header--ada">
           <div className="preview-paper-header-copy">
-            <h1 className="preview-paper-name">{data.personal.fullName}</h1>
+            <p className="preview-paper-name">{data.personal.fullName}</p>
             <p className="preview-paper-role">{data.personal.jobTitle}</p>
           </div>
 
@@ -100,7 +100,7 @@ export default function CvPreview({ data, previewLocale, templateKey }: CvPrevie
   return (
     <div className={rootClassName}>
       <header className={`preview-paper-header ${templateKey === "harvard" ? "preview-paper-header--harvard" : ""}`.trim()}>
-        <h1 className="preview-paper-name">{data.personal.fullName}</h1>
+        <p className="preview-paper-name">{data.personal.fullName}</p>
         <p className="preview-paper-role">{data.personal.jobTitle}</p>
 
         {contactItems.length > 0 ? (
@@ -282,3 +282,5 @@ function PreviewEducationSection({
     </PreviewContentSection>
   );
 }
+
+export default memo(CvPreview);

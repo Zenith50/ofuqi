@@ -45,7 +45,7 @@ export default function ComparePage() {
   );
 
   return (
-    <main className="cmp-shell" dir={dir}>
+    <main id="main" className="cmp-shell" dir={dir}>
       <header className="cmp-topbar">
         <div className="cmp-brand">
           <span className="cmp-mark">OF</span>

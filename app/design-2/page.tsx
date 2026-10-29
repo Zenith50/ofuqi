@@ -150,7 +150,7 @@ export default function DesignTwoPage() {
   };
 
   return (
-    <main className="cmp-d2-shell" dir={dir}>
+    <main id="main" className="cmp-d2-shell" dir={dir}>
       <header className="cmp-d2-topbar">
         <Link href="/compare" className="cmp-d2-brand">
           <span>{copy.common.brandMark}</span>

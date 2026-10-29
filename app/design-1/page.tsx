@@ -105,7 +105,7 @@ export default function DesignOnePage() {
   ];
 
   return (
-    <main className="cmp-d1" dir={dir}>
+    <main id="main" className="cmp-d1" dir={dir}>
       <style>{designOneCss}</style>
 
       <aside className="cmp-d1-sidebar" aria-label={ui.shell}>

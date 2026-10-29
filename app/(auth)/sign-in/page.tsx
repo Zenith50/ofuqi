@@ -1,18 +1,16 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
-import LocaleToggle from "@/components/ui/LocaleToggle";
-import HoverActionButton from "@/components/ui/HoverActionButton";
-import Reveal, { RevealItem } from "@/components/ui/Reveal";
-import SegmentedControl from "@/components/ui/SegmentedControl";
-import TextShimmer from "@/components/ui/TextShimmer";
+import SheetFrame from "@/components/cv/SheetFrame";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
+import HoverActionButton from "@/components/ui/HoverActionButton";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import { getCopy } from "@/lib/app/content";
+import { motionEase } from "@/lib/ui/motion";
 
 function getAuthErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
@@ -20,6 +18,7 @@ function getAuthErrorMessage(error: unknown) {
 
 export default function SignInPage() {
   const router = useRouter();
+  const reduced = useReducedMotion();
   const { locale } = useAppLocale();
   const copy = getCopy(locale);
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -37,28 +36,23 @@ export default function SignInPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!email || !password) {
+    if (!email.trim() || !password) {
+      setError(copy.auth.errors.required);
       return;
     }
 
-    try {
-      setIsSubmitting(true);
-      setError(null);
+    setIsSubmitting(true);
+    setError(null);
 
-      const result = await signIn("password", {
-        email,
-        password,
-        flow: step,
-        redirectTo: "/dashboard",
-      });
-
-      if (result.signingIn) {
-        router.replace("/dashboard");
-      }
-    } catch (authError: unknown) {
+    const result = await signIn("password", {
+      email,
+      password,
+      flow: step,
+      redirectTo: "/dashboard",
+    }).catch((authError: unknown) => {
       const message = getAuthErrorMessage(authError);
 
       if (message.includes("already exists")) {
@@ -66,65 +60,37 @@ export default function SignInPage() {
       } else if (message.includes("fetch failed")) {
         setError(copy.auth.errors.backendOffline);
       } else if (
-        message.includes("InvalidAccountId") ||
-        message.includes("CodeError") ||
-        message.includes("Invalid credentials")
+        message.includes("InvalidAccountId")
+        || message.includes("CodeError")
+        || message.includes("Invalid credentials")
       ) {
         setError(copy.auth.errors.invalid);
       } else {
         setError(`${copy.auth.errors.failedPrefix} ${message}`);
       }
-    } finally {
-      setIsSubmitting(false);
+
+      return null;
+    });
+
+    if (result?.signingIn) {
+      router.replace("/dashboard");
     }
+
+    setIsSubmitting(false);
   };
 
   const title = step === "signIn" ? copy.auth.form.signInTitle : copy.auth.form.signUpTitle;
   const subtitle = step === "signIn" ? copy.auth.form.signInSubtitle : copy.auth.form.signUpSubtitle;
+  const pending = isLoading || isSubmitting;
 
   return (
-    <div className="auth-shell motion-page-enter">
-      <section className="auth-visual">
-        <div className="auth-visual-top">
-          <div className="auth-visual-toolbar">
-            <span className="section-kicker">
-              <TextShimmer>{copy.auth.kicker}</TextShimmer>
-            </span>
-            <LocaleToggle compact />
-          </div>
-
-          <Reveal className="auth-visual-copy" when="mount">
-            <h1>
-              <span>{copy.auth.titleStart}</span>
-              <span>{copy.auth.titleEnd}</span>
-            </h1>
-            <p>{copy.auth.lead}</p>
-          </Reveal>
-
-          <Reveal className="auth-metrics" stagger when="mount">
-            {copy.auth.metrics.map((metric) => (
-              <RevealItem key={metric.label} className="auth-metric">
-                <strong>{metric.value}</strong>
-                <span>{metric.label}</span>
-              </RevealItem>
-            ))}
-          </Reveal>
-        </div>
-
-        <Reveal className="auth-feature-list" stagger when="mount">
-          {copy.auth.features.map((feature) => (
-            <RevealItem key={feature.id}>
-              <article className="auth-feature">
-                <p>{feature.id}</p>
-                <h3>{feature.title}</h3>
-                <p className="muted-copy">{feature.body}</p>
-              </article>
-            </RevealItem>
-          ))}
-        </Reveal>
-      </section>
-
-      <section className="auth-card glass-panel">
+    <div className="auth-shell">
+      <motion.section
+        className="auth-card"
+        initial={reduced ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.24, ease: motionEase }}
+      >
         <header className="auth-card-header">
           <SegmentedControl
             ariaLabel={copy.auth.kicker}
@@ -138,23 +104,23 @@ export default function SignInPage() {
               { value: "signUp", label: copy.auth.tabs.signUp },
             ]}
           />
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <h2 className="auth-title">{title}</h2>
-              <p className="auth-subtitle">{subtitle}</p>
-            </motion.div>
-          </AnimatePresence>
+          <h1 className="auth-title">{title}</h1>
+          <p className="auth-subtitle">{subtitle}</p>
         </header>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          {error ? <div className="auth-error">{error}</div> : null}
+        <form className="auth-form" onSubmit={(event) => void handleSubmit(event)} noValidate aria-busy={pending}>
+          {error ? (
+            <motion.div
+              id="auth-error"
+              className="auth-error"
+              role="alert"
+              initial={reduced ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.16, ease: motionEase }}
+            >
+              {error}
+            </motion.div>
+          ) : null}
 
           <div className="field">
             <label htmlFor="email">{copy.auth.form.emailLabel}</label>
@@ -166,6 +132,9 @@ export default function SignInPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 autoComplete="email"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? "auth-error" : undefined}
+                disabled={pending}
                 required
               />
             </div>
@@ -181,16 +150,21 @@ export default function SignInPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete={step === "signIn" ? "current-password" : "new-password"}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? "auth-error" : undefined}
+                disabled={pending}
                 required
               />
             </div>
           </div>
 
-          <HoverActionButton type="submit" className="auth-submit" disabled={isSubmitting}>
-            {isSubmitting
-              ? step === "signIn"
-                ? copy.auth.form.signingIn
-                : copy.auth.form.signingUp
+          <HoverActionButton type="submit" className="auth-submit" disabled={pending}>
+            {pending
+              ? isSubmitting
+                ? step === "signIn"
+                  ? copy.auth.form.signingIn
+                  : copy.auth.form.signingUp
+                : copy.common.loadingWorkspace
               : step === "signIn"
                 ? copy.auth.form.signInAction
                 : copy.auth.form.signUpAction}
@@ -198,22 +172,27 @@ export default function SignInPage() {
         </form>
 
         <div className="auth-footer">
-          <span>
-            {step === "signIn" ? copy.auth.footer.needAccount : copy.auth.footer.haveAccount}{" "}
-            <button
-              type="button"
-              className="text-link"
-              onClick={() => setStep(step === "signIn" ? "signUp" : "signIn")}
-            >
-              {step === "signIn" ? copy.auth.footer.switchToSignUp : copy.auth.footer.switchToSignIn}
-            </button>
-          </span>
-
-          <Link href="/" className="text-link">
-            {copy.common.backToLanding}
-          </Link>
+          <button
+            type="button"
+            className="text-link"
+            onClick={() => {
+              setStep(step === "signIn" ? "signUp" : "signIn");
+              setError(null);
+            }}
+          >
+            {step === "signIn" ? copy.auth.footer.switchToSignUp : copy.auth.footer.switchToSignIn}
+          </button>
         </div>
-      </section>
+      </motion.section>
+
+      <aside className="auth-story">
+        <p className="section-kicker">{copy.auth.kicker}</p>
+        <p className="auth-story-title">
+          <span>{copy.auth.titleStart}</span> <span>{copy.auth.titleEnd}</span>
+        </p>
+        <p className="muted-copy">{copy.auth.lead}</p>
+        <SheetFrame templateKey="harvard" sampleLocale={locale} className="sheet-frame--auth" />
+      </aside>
     </div>
   );
 }

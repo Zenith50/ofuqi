@@ -10,7 +10,7 @@ import BrandLockup from "@/components/shell/BrandLockup";
 import { useDialogLifecycle } from "@/components/shell/useDialog";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
 import { getCopy } from "@/lib/app/content";
-import { motionEase } from "@/lib/ui/motion";
+import { drawerExitTransition, drawerTransition, motionEase } from "@/lib/ui/motion";
 
 const navHrefs = ["/dashboard", "/dashboard/templates", "/dashboard/performance", "/dashboard/settings"] as const;
 
@@ -34,7 +34,7 @@ export default function AppSidebar({
   const { dir, locale } = useAppLocale();
   const copy = getCopy(locale);
   const drawerRef = useRef<HTMLElement>(null);
-  const offscreen = dir === "rtl" ? "100%" : "-100%";
+  const closedTransform = dir === "rtl" ? "translateX(100%)" : "translateX(-100%)";
 
   useDialogLifecycle(mobileOpen, drawerRef, onCloseMobile);
 
@@ -125,10 +125,10 @@ export default function AppSidebar({
               role="dialog"
               aria-modal="true"
               aria-label={copy.dashboard.navLabel}
-              initial={reduced ? false : { x: offscreen }}
-              animate={{ x: 0 }}
-              exit={{ x: offscreen, transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } }}
-              transition={{ duration: 0.24, ease: motionEase }}
+              initial={reduced ? false : { transform: closedTransform }}
+              animate={{ transform: "translateX(0%)" }}
+              exit={{ transform: closedTransform, transition: reduced ? { duration: 0 } : drawerExitTransition }}
+              transition={reduced ? { duration: 0 } : drawerTransition}
             >
               <div className="app-drawer-head">
                 <BrandLockup href="/dashboard" subtitle={false} />

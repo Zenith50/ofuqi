@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useId } from "react";
 import { pillTransition } from "@/lib/ui/motion";
 
@@ -28,6 +28,7 @@ export default function SegmentedControl<T extends string>({
   className,
 }: SegmentedControlProps<T>) {
   const pillId = useId();
+  const reduced = useReducedMotion();
 
   return (
     <div
@@ -53,7 +54,7 @@ export default function SegmentedControl<T extends string>({
               <motion.span
                 layoutId={pillId}
                 className="choice-control__pill"
-                transition={pillTransition}
+                transition={reduced ? { duration: 0 } : pillTransition}
               />
             ) : null}
             <span className="choice-control__label">{option.label}</span>

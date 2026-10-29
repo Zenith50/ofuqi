@@ -112,8 +112,9 @@
   --radius-pill: 999px;
   --shadow-paper: 0 1px 1px rgba(12, 17, 19, 0.04), 0 16px 40px rgba(0, 0, 0, 0.28);
   --shadow-overlay: 0 24px 64px rgba(0, 0, 0, 0.45);
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --dur-press: 80ms;
   --dur-micro: 140ms;
   --dur-fast: 160ms;
@@ -205,6 +206,12 @@ input,
 textarea {
   font: inherit;
   color: inherit;
+}
+
+button,
+a,
+summary {
+  -webkit-tap-highlight-color: transparent;
 }
 
 button {
@@ -361,6 +368,62 @@ html[dir="rtl"] .hero-title {
 .button-primary,
 .button-secondary,
 .button-small,
+.button-danger,
+.hover-action-button,
+.auth-submit,
+.editor-send-button,
+.editor-chip-button,
+.app-icon-button,
+.account-menu-item,
+.account-signout,
+.choice-control__button,
+.app-nav-link,
+.library-card-primary,
+.export-trigger,
+.text-link,
+.brand-lockup,
+.mkt-links a,
+.mkt-disclosure summary,
+.mkt-disclosure a,
+.editor-pane-tabs button {
+  touch-action: manipulation;
+  user-select: none;
+  transition:
+    background var(--dur-micro) ease,
+    background-color var(--dur-micro) ease,
+    border-color var(--dur-micro) ease,
+    color var(--dur-micro) ease,
+    opacity var(--dur-micro) ease,
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.button-primary:active,
+.button-secondary:active,
+.button-small:active,
+.button-danger:active,
+.hover-action-button:active,
+.auth-submit:active,
+.editor-send-button:active,
+.editor-chip-button:active,
+.app-icon-button:active,
+.account-menu-item:active,
+.account-signout:active,
+.choice-control__button:active,
+.app-nav-link:active,
+.library-card-primary:active,
+.export-trigger:active,
+.text-link:active,
+.brand-lockup:active,
+.mkt-links a:active,
+.mkt-disclosure summary:active,
+.mkt-disclosure a:active,
+.editor-pane-tabs button:active {
+  transform: scale(0.97);
+}
+
+.button-primary,
+.button-secondary,
+.button-small,
 .hover-action-button,
 .auth-submit,
 .editor-send-button,
@@ -382,37 +445,28 @@ html[dir="rtl"] .hero-title {
   text-transform: none;
   line-height: 1.2;
   text-decoration: none;
-  transition:
-    background var(--dur-micro) var(--ease-out),
-    border-color var(--dur-micro) var(--ease-out),
-    color var(--dur-micro) var(--ease-out),
-    transform var(--dur-fast) var(--ease-out);
 }
 
 .button-primary,
 .hover-action-button--primary,
 .auth-submit,
 .editor-send-button,
-.library-card-primary {
+.library-card-primary,
+.export-trigger.button-primary {
   background: var(--color-action);
   color: var(--color-action-ink);
-}
-
-.button-primary:hover,
-.hover-action-button--primary:hover,
-.auth-submit:hover,
-.editor-send-button:hover,
-.library-card-primary:hover {
-  background: var(--color-action-hover);
-  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.72),
+    0 1px 0 rgb(0 0 0 / 0.55);
 }
 
 .button-primary:active,
 .hover-action-button--primary:active,
-.auth-submit:active {
-  transform: scale(0.98);
-  transition-duration: var(--dur-press);
-  transition-timing-function: var(--ease-in);
+.auth-submit:active,
+.editor-send-button:active,
+.library-card-primary:active,
+.export-trigger.button-primary:active {
+  background: color-mix(in srgb, var(--color-action) 86%, var(--color-action-ink));
 }
 
 .button-secondary,
@@ -423,9 +477,12 @@ html[dir="rtl"] .hero-title {
   border-color: var(--color-control-line);
 }
 
-.button-secondary:hover,
-.button-small:hover,
-.hover-action-button--secondary:hover {
+.button-secondary:active,
+.button-small:active,
+.hover-action-button--secondary:active,
+.account-signout:active,
+.editor-chip-button:active,
+.app-icon-button:active {
   background: var(--color-surface);
 }
 
@@ -435,15 +492,14 @@ html[dir="rtl"] .hero-title {
   border-color: transparent;
 }
 
+.button-danger:active {
+  background: color-mix(in srgb, var(--color-danger-soft) 70%, var(--color-danger));
+}
+
 .editor-chip-button {
   background: var(--color-surface);
   color: var(--color-ink);
   border-color: var(--color-line);
-}
-
-.editor-chip-button:hover {
-  transform: translateY(-1px);
-  border-color: var(--color-control-line);
 }
 
 .app-icon-button {
@@ -454,25 +510,21 @@ html[dir="rtl"] .hero-title {
   border-color: var(--color-control-line);
 }
 
-.app-icon-button:active,
-.library-card:active {
-  transform: none;
-}
-
-.app-icon-button:active {
-  transform: scale(0.96);
-  transition-duration: var(--dur-press);
-  transition-timing-function: var(--ease-in);
-}
-
 .button-primary:disabled,
 .button-secondary:disabled,
 .button-small:disabled,
+.button-danger:disabled,
 .hover-action-button:disabled,
-.editor-chip-button:disabled {
+.editor-chip-button:disabled,
+.editor-send-button:disabled,
+.auth-submit:disabled,
+.choice-control__button:disabled,
+.export-trigger:disabled,
+.export-trigger.button-primary:disabled {
   background: var(--color-surface);
   color: var(--color-ink-muted);
   border-color: var(--color-line);
+  box-shadow: none;
   cursor: not-allowed;
   transform: none;
 }
@@ -508,7 +560,7 @@ html[dir="rtl"] .hero-title {
   border-radius: var(--radius-2);
   border: 1px solid var(--color-control-line);
   background: var(--color-sunken);
-  transition: border-color var(--dur-fast) var(--ease-out);
+  transition: border-color var(--dur-micro) ease;
 }
 
 .editor-input-shell {
@@ -559,6 +611,7 @@ html[dir="rtl"] .hero-title {
   border-radius: var(--radius-2);
   border: 1px solid var(--color-line);
   background: var(--color-sunken);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.55);
 }
 
 .choice-control__button {
@@ -586,6 +639,9 @@ html[dir="rtl"] .hero-title {
   border-radius: var(--radius-2);
   background: var(--color-surface);
   border: 1px solid var(--color-control-line);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 1px 1px rgb(0 0 0 / 0.35);
 }
 
 .choice-control__label {
@@ -645,12 +701,6 @@ html[dir="rtl"] .hero-title {
   align-items: center;
   padding-inline: var(--space-3);
   color: var(--color-ink-muted);
-  transition: color var(--dur-micro) var(--ease-out);
-}
-
-.mkt-links a:hover,
-.mkt-disclosure a:hover {
-  color: var(--color-ink);
 }
 
 .mkt-disclosure {
@@ -908,32 +958,13 @@ main {
   border-radius: var(--radius-2);
   border-inline-start: 2px solid transparent;
   color: var(--color-ink-muted);
-  transition:
-    background var(--dur-micro) var(--ease-out),
-    color var(--dur-micro) var(--ease-out),
-    transform var(--dur-fast) var(--ease-out);
-}
-
-.app-nav-link:hover {
-  background: var(--color-surface);
-  color: var(--color-ink);
-  transform: translateX(2px);
-}
-
-html[dir="rtl"] .app-nav-link:hover {
-  transform: translateX(-2px);
 }
 
 .app-nav-link.active {
   background: var(--color-accent-soft);
   color: var(--color-ink);
   border-inline-start-color: var(--color-accent);
-  transform: none;
-}
-
-.app-sidebar--collapsed .app-nav-link:hover,
-.app-sidebar--collapsed .app-nav-link.active {
-  transform: none;
+  box-shadow: inset 0 1px 0 rgb(143 191 198 / 0.22);
 }
 
 .account-panel,
@@ -1130,11 +1161,6 @@ html[dir="rtl"] .app-nav-link:hover {
 
 .library-card {
   align-content: start;
-  transition: transform var(--dur-fast) var(--ease-out);
-}
-
-.library-card:hover {
-  transform: translateY(-2px);
 }
 
 .library-card-copy,
@@ -1434,6 +1460,7 @@ html[dir="rtl"] .editor-counter-track span {
   border: 1px solid var(--color-control-line);
   border-radius: var(--radius-4);
   box-shadow: var(--shadow-overlay);
+  transform-origin: center;
 }
 
 .export-footer {
@@ -1499,6 +1526,13 @@ html[dir="rtl"] .editor-counter-track span {
   --paper-muted: var(--paper-ats-muted);
   --paper-rule: var(--paper-ats-rule);
   --paper-accent: var(--paper-ats-accent);
+}
+
+.preview-paper,
+.cv-card-preview,
+.sheet-frame,
+.sheet-frame__scale {
+  animation: none;
 }
 
 .preview-paper {
@@ -1831,12 +1865,10 @@ html[dir="rtl"] .editor-counter-track span {
 @keyframes card-rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
   }
 
   to {
     opacity: 1;
-    transform: none;
   }
 }
 
@@ -1969,27 +2001,132 @@ html[dir="rtl"] .editor-counter-track span {
   }
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .button-primary:hover:not(:active),
+  .hover-action-button--primary:hover:not(:active),
+  .auth-submit:hover:not(:active),
+  .editor-send-button:hover:not(:active),
+  .library-card-primary:hover:not(:active),
+  .export-trigger.button-primary:hover:not(:active) {
+    background: var(--color-action-hover);
+  }
+
+  .button-secondary:hover:not(:active),
+  .button-small:hover:not(:active),
+  .hover-action-button--secondary:hover:not(:active),
+  .account-menu-item:hover:not(:active),
+  .account-signout:hover:not(:active),
+  .app-icon-button:hover:not(:active) {
+    background: var(--color-surface);
+  }
+
+  .button-danger:hover:not(:active) {
+    border-color: var(--color-danger);
+  }
+
+  .editor-chip-button:hover:not(:active) {
+    border-color: var(--color-control-line);
+  }
+
+  .choice-control__button:hover:not(.active):not(:disabled):not(:active) {
+    color: var(--color-ink);
+  }
+
+  .app-nav-link:hover:not(.active):not(:active) {
+    background: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  .mkt-links a:hover:not(:active),
+  .mkt-disclosure a:hover:not(:active) {
+    color: var(--color-ink);
+  }
+
+  .text-link:hover:not(:active) {
+    color: var(--color-focus);
+  }
+
+  .editor-pane-tabs button:hover:not(.active):not(:active) {
+    background: var(--color-surface);
+    color: var(--color-ink);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation: none !important;
-    transition: none !important;
     scroll-behavior: auto !important;
+  }
+
+  .button-primary,
+  .button-secondary,
+  .button-small,
+  .button-danger,
+  .hover-action-button,
+  .auth-submit,
+  .editor-send-button,
+  .editor-chip-button,
+  .app-icon-button,
+  .account-menu-item,
+  .account-signout,
+  .choice-control__button,
+  .app-nav-link,
+  .library-card-primary,
+  .export-trigger,
+  .text-link,
+  .brand-lockup,
+  .mkt-links a,
+  .mkt-disclosure summary,
+  .mkt-disclosure a,
+  .editor-pane-tabs button,
+  .editor-counter-track span {
+    transition-property: background, background-color, border-color, color, opacity !important;
   }
 
   .button-primary:hover,
   .button-primary:active,
+  .button-secondary:hover,
+  .button-secondary:active,
+  .button-small:hover,
+  .button-small:active,
+  .button-danger:hover,
+  .button-danger:active,
   .hover-action-button:hover,
   .hover-action-button:active,
   .auth-submit:hover,
   .auth-submit:active,
   .editor-send-button:hover,
-  .library-card:hover,
-  .library-card-primary:hover,
-  .app-nav-link:hover,
+  .editor-send-button:active,
   .editor-chip-button:hover,
-  .app-icon-button:active {
+  .editor-chip-button:active,
+  .app-icon-button:hover,
+  .app-icon-button:active,
+  .account-menu-item:hover,
+  .account-menu-item:active,
+  .account-signout:hover,
+  .account-signout:active,
+  .choice-control__button:hover,
+  .choice-control__button:active,
+  .app-nav-link:hover,
+  .app-nav-link:active,
+  .library-card-primary:hover,
+  .library-card-primary:active,
+  .export-trigger:hover,
+  .export-trigger:active,
+  .text-link:hover,
+  .text-link:active,
+  .brand-lockup:hover,
+  .brand-lockup:active,
+  .mkt-links a:hover,
+  .mkt-links a:active,
+  .mkt-disclosure summary:hover,
+  .mkt-disclosure summary:active,
+  .mkt-disclosure a:hover,
+  .mkt-disclosure a:active,
+  .editor-pane-tabs button:hover,
+  .editor-pane-tabs button:active {
     transform: none !important;
   }
 }

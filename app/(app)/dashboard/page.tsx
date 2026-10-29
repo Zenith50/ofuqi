@@ -207,7 +207,7 @@ export default function DashboardPage() {
                     </HoverActionButton>
                     <button
                       type="button"
-                      className="button-small"
+                      className="button-small export-trigger"
                       onClick={() => void handleExport(project)}
                       disabled={activeExport === `${project.id}-pdf`}
                     >

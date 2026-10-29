@@ -796,7 +796,7 @@ function NewChatPageContent() {
                 { value: "translation", label: copy.chat.previewTranslation, disabled: isTranslating },
               ]}
             />
-            <button type="button" className="button-primary" onClick={() => setExportOpen(true)}>
+            <button type="button" className="button-primary export-trigger" onClick={() => setExportOpen(true)}>
               <Download size={16} strokeWidth={1.5} aria-hidden="true" />
               {copy.chat.exportOpen}
             </button>
@@ -840,10 +840,10 @@ function NewChatPageContent() {
               aria-modal="true"
               aria-labelledby="export-dialog-title"
               tabIndex={-1}
-              initial={reduced ? false : { opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } }}
-              transition={{ duration: 0.22, ease: motionEase }}
+              initial={reduced ? false : { opacity: 0, transform: "scale(0.96)" }}
+              animate={{ opacity: 1, transform: "scale(1)" }}
+              exit={{ opacity: 0, transform: "scale(0.96)", transition: reduced ? { duration: 0 } : { duration: 0.16, ease: motionEase } }}
+              transition={reduced ? { duration: 0 } : { duration: 0.25, ease: motionEase }}
             >
               <header className="export-header">
                 <h2 id="export-dialog-title">{copy.chat.exportTitle}</h2>
@@ -877,7 +877,7 @@ function NewChatPageContent() {
                 <button type="button" className="button-secondary" onClick={closeExport} disabled={isExporting}>
                   {copy.common.cancel}
                 </button>
-                <button type="button" className="button-primary" onClick={() => void handleExport()} disabled={isExporting}>
+                <button type="button" className="button-primary export-trigger" onClick={() => void handleExport()} disabled={isExporting}>
                   {isExporting ? copy.common.loadingExport : copy.chat.exportConfirm}
                 </button>
               </div>

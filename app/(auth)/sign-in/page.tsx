@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import LocaleToggle from "@/components/ui/LocaleToggle";
 import HoverActionButton from "@/components/ui/HoverActionButton";
+import Reveal, { RevealItem } from "@/components/ui/Reveal";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import TextShimmer from "@/components/ui/TextShimmer";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
 import { getCopy } from "@/lib/app/content";
@@ -81,7 +84,7 @@ export default function SignInPage() {
 
   return (
     <div className="auth-shell motion-page-enter">
-      <section className="auth-visual motion-slide-up">
+      <section className="auth-visual">
         <div className="auth-visual-top">
           <div className="auth-visual-toolbar">
             <span className="section-kicker">
@@ -90,56 +93,64 @@ export default function SignInPage() {
             <LocaleToggle compact />
           </div>
 
-          <div className="auth-visual-copy">
+          <Reveal className="auth-visual-copy" when="mount">
             <h1>
               <span>{copy.auth.titleStart}</span>
               <span>{copy.auth.titleEnd}</span>
             </h1>
             <p>{copy.auth.lead}</p>
-          </div>
+          </Reveal>
 
-          <div className="auth-metrics">
-            {copy.auth.metrics.map((metric, index) => (
-              <div key={metric.label} className={`auth-metric motion-slide-up motion-delay-${index + 1}`}>
+          <Reveal className="auth-metrics" stagger when="mount">
+            {copy.auth.metrics.map((metric) => (
+              <RevealItem key={metric.label} className="auth-metric">
                 <strong>{metric.value}</strong>
                 <span>{metric.label}</span>
-              </div>
+              </RevealItem>
             ))}
-          </div>
+          </Reveal>
         </div>
 
-        <div className="auth-feature-list">
-          {copy.auth.features.map((feature, index) => (
-            <article key={feature.id} className={`auth-feature motion-slide-up motion-delay-${index + 1}`}>
-              <p>{feature.id}</p>
-              <h3>{feature.title}</h3>
-              <p className="muted-copy">{feature.body}</p>
-            </article>
+        <Reveal className="auth-feature-list" stagger when="mount">
+          {copy.auth.features.map((feature) => (
+            <RevealItem key={feature.id}>
+              <article className="auth-feature">
+                <p>{feature.id}</p>
+                <h3>{feature.title}</h3>
+                <p className="muted-copy">{feature.body}</p>
+              </article>
+            </RevealItem>
           ))}
-        </div>
+        </Reveal>
       </section>
 
-      <section className="auth-card glass-panel motion-slide-up motion-delay-2">
+      <section className="auth-card glass-panel">
         <header className="auth-card-header">
-          <div className="auth-toggle" role="tablist" aria-label={copy.auth.kicker}>
-            <button
-              type="button"
-              className={step === "signIn" ? "active" : undefined}
-              onClick={() => setStep("signIn")}
-            >
-              {copy.auth.tabs.signIn}
-            </button>
-            <button
-              type="button"
-              className={step === "signUp" ? "active" : undefined}
-              onClick={() => setStep("signUp")}
-            >
-              {copy.auth.tabs.signUp}
-            </button>
-          </div>
+          <SegmentedControl
+            ariaLabel={copy.auth.kicker}
+            value={step}
+            onChange={(nextStep) => {
+              setStep(nextStep);
+              setError(null);
+            }}
+            options={[
+              { value: "signIn", label: copy.auth.tabs.signIn },
+              { value: "signUp", label: copy.auth.tabs.signUp },
+            ]}
+          />
 
-          <h1 className="auth-title">{title}</h1>
-          <p className="auth-subtitle">{subtitle}</p>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <h2 className="auth-title">{title}</h2>
+              <p className="auth-subtitle">{subtitle}</p>
+            </motion.div>
+          </AnimatePresence>
         </header>
 
         <form className="auth-form" onSubmit={handleSubmit}>

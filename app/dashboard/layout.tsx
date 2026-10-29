@@ -139,9 +139,9 @@ export default function DashboardLayout({
               {expanded ? (
                 <motion.div
                   key="brand-copy"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
                   className="library-brand-copy"
                 >
                   <strong>{copy.common.brandTitle}</strong>
@@ -198,9 +198,9 @@ export default function DashboardLayout({
                 {expanded ? (
                   <motion.span
                     key={`${item.href}-label`}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -8 }}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 6 }}
                     className="library-nav-label"
                   >
                     {item.label}
@@ -290,7 +290,7 @@ export default function DashboardLayout({
       </AnimatePresence>
 
       <div className="library-main">
-        <header className="library-topbar motion-slide-up motion-delay-1">
+        <header className="library-topbar">
           <div className="library-topbar-left">
             <button
               type="button"

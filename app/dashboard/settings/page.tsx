@@ -3,6 +3,7 @@
 import Link from "next/link";
 import LocaleToggle from "@/components/ui/LocaleToggle";
 import HoverActionButton from "@/components/ui/HoverActionButton";
+import Reveal, { RevealItem } from "@/components/ui/Reveal";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
 import { getCopy } from "@/lib/app/content";
 
@@ -12,7 +13,7 @@ export default function SettingsPage() {
 
   return (
     <div className="library-page">
-      <section className="library-hero motion-slide-up">
+      <Reveal className="library-hero">
         <div className="library-hero-copy">
           <p className="workspace-label">{copy.settings.headingLabel}</p>
           <h1 className="workspace-title">{copy.settings.headingTitle}</h1>
@@ -20,9 +21,10 @@ export default function SettingsPage() {
         </div>
 
         <HoverActionButton href="/chat/new">{copy.settings.primaryAction}</HoverActionButton>
-      </section>
+      </Reveal>
 
-      <section className="library-utility-grid motion-slide-up motion-delay-1">
+      <Reveal className="library-utility-grid" stagger>
+        <RevealItem>
         <article className="library-utility-card library-utility-card--stacked">
           <div>
             <p className="workspace-label">{copy.settings.localeEyebrow}</p>
@@ -35,7 +37,9 @@ export default function SettingsPage() {
             <LocaleToggle label={copy.common.languageToggleLabel} />
           </div>
         </article>
+        </RevealItem>
 
+        <RevealItem>
         <article className="library-utility-card library-utility-card--stacked">
           <div>
             <p className="workspace-label">{copy.settings.exportEyebrow}</p>
@@ -52,7 +56,9 @@ export default function SettingsPage() {
             ))}
           </div>
         </article>
+        </RevealItem>
 
+        <RevealItem>
         <article className="library-utility-card library-utility-card--stacked">
           <div>
             <p className="workspace-label">{copy.settings.accountEyebrow}</p>
@@ -69,7 +75,8 @@ export default function SettingsPage() {
             </Link>
           </div>
         </article>
-      </section>
+        </RevealItem>
+      </Reveal>
     </div>
   );
 }

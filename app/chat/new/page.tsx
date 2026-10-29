@@ -6,12 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { Download, Globe2, Languages, LayoutTemplate, Sparkles } from "lucide-react";
+import { Download, FileText, Globe2, Languages, LayoutTemplate, Sparkles } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import CvPreview from "@/components/cv/CvPreview";
+import EmptyState from "@/components/ui/EmptyState";
 import LocaleToggle from "@/components/ui/LocaleToggle";
 import HoverActionButton from "@/components/ui/HoverActionButton";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import TextShimmer from "@/components/ui/TextShimmer";
 import { buildExportJobs, type ExportFormatChoice, type ExportLanguageChoice } from "@/lib/cv/export";
 import { useCharacterLimit } from "@/lib/hooks/useCharacterLimit";
@@ -52,13 +54,22 @@ function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: numb
   );
 }
 
+function EditorLoading({ label }: { label: string }) {
+  return (
+    <div className="editor-shell editor-shell--loading">
+      <TextShimmer>{label}</TextShimmer>
+    </div>
+  );
+}
+
+function EditorLoadingFallback() {
+  const { locale } = useAppLocale();
+  return <EditorLoading label={getCopy(locale).chat.loadingEditor} />;
+}
+
 export default function NewChatPage() {
   return (
-    <Suspense fallback={
-      <div className="editor-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <TextShimmer>Loading editor...</TextShimmer>
-      </div>
-    }>
+    <Suspense fallback={<EditorLoadingFallback />}>
       <NewChatPageContent />
     </Suspense>
   );
@@ -120,7 +131,13 @@ function NewChatPageContent() {
         setProject(mapped);
         setSession(createWorkspaceSessionFromProject(mapped));
         setTranslationCache(mapped.translationCache || null);
-        setNotice(getCopy(initLocaleRef.current).chat.loadedDraft.replace("{name}", mapped.variant.personal.fullName));
+        const openedName = mapped.variant.personal.fullName.trim();
+        const openedCopy = getCopy(initLocaleRef.current);
+        setNotice(
+          openedName
+            ? openedCopy.chat.loadedDraft.replace("{name}", openedName)
+            : openedCopy.chat.previewEmptyTitle,
+        );
       } else if (rawProject === null && loadedProjectId.current === null && user) {
         // Project doesn't exist or not owned by user
         router.replace("/dashboard");
@@ -412,18 +429,18 @@ function NewChatPageContent() {
         setIsTranslating(true);
         // Only translate if we don't have a valid cache, or if it got cleared by an edit
         if (!translationCache || translationCache.language !== targetLang) {
-          setNotice(targetLang === "ar" ? "جاري الترجمة..." : "Translating...");
+          setNotice(copy.chat.translating);
           
           const translatedData = await fetchCachedOrNewTranslation(sourceData, targetLang);
           setTranslationCache(translatedData);
           debouncedSave(project.id as Id<"cvProjects">, sourceData, session, translatedData);
           
-          setNotice(targetLang === "ar" ? "✓ تمت الترجمة بنجاح" : "✓ Translation complete");
+          setNotice(copy.chat.translationComplete);
           setTimeout(() => setNotice(null), 3000);
         }
       } catch (error) {
         console.error("Translation failed:", error);
-        setNotice(targetLang === "ar" ? "فشلت الترجمة" : "Translation failed");
+        setNotice(copy.chat.translationFailed);
         setTimeout(() => setNotice(null), 3000);
       } finally {
         setIsTranslating(false);
@@ -434,14 +451,18 @@ function NewChatPageContent() {
   // If loading, show shimmer
   if (!project || !session) {
     return (
-      <div className="editor-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <TextShimmer>{copy.common.loadingWorkspace ?? "Loading workspace..."}</TextShimmer>
-      </div>
+      <EditorLoading label={copy.chat.loadingEditor} />
     );
   }
 
   const draftCopy = getCopy(session.draftData.language);
   const displayData = previewMode === "translation" && translationCache ? translationCache : session.draftData;
+  const previewIsEmpty =
+    !displayData.personal.fullName.trim()
+    && !displayData.summary.trim()
+    && displayData.experience.length === 0
+    && displayData.education.length === 0
+    && displayData.skills.length === 0;
   const previewLocale = getGeneratorLocale(displayData.language);
   const activeTemplateName = copy.dashboard.templateNames[project.shared.templateKey];
   
@@ -458,7 +479,7 @@ function NewChatPageContent() {
 
   return (
     <div className="editor-shell motion-page-enter">
-      <header className="editor-topbar motion-slide-up">
+      <header className="editor-topbar">
         <div className="editor-brand">
           <span className="editor-brand-mark">{copy.common.brandMark}</span>
           <div className="editor-brand-copy">
@@ -475,8 +496,7 @@ function NewChatPageContent() {
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="muted-copy"
-                style={{ marginRight: '1rem', fontSize: '0.85rem' }}
+                className="muted-copy editor-save-status"
               >
                 {saveStatus === "saving" ? copy.common.saving : copy.common.saved}
               </motion.span>
@@ -493,7 +513,7 @@ function NewChatPageContent() {
       </header>
 
       <main className="editor-layout">
-        <section className="editor-conversation-panel motion-slide-up motion-delay-1">
+        <section className="editor-conversation-panel">
           <div className="editor-pane-head">
             <div className="editor-pane-head-copy">
               <p className="workspace-label">{copy.chat.threadLabel}</p>
@@ -505,25 +525,20 @@ function NewChatPageContent() {
             </div>
 
             <div className="editor-pane-tools">
-              <div className="editor-language-control locale-toggle locale-toggle--compact">
-                <span className="locale-toggle-label">{session.draftData.language === "en" ? "Translate to AR" : "Translate to EN"}</span>
-                <div className="locale-toggle-buttons" role="group" aria-label="Preview">
-                  <button
-                    type="button"
-                    className={previewMode === "source" ? "active" : undefined}
-                    onClick={() => handlePreviewToggle("source")}
-                  >
-                    Original
-                  </button>
-                  <button
-                    type="button"
-                    className={previewMode === "translation" ? "active" : undefined}
-                    onClick={() => handlePreviewToggle("translation")}
-                    disabled={isTranslating}
-                  >
-                    Translation
-                  </button>
-                </div>
+              <div className="editor-language-control">
+                <span className="locale-toggle-label">
+                  {session.draftData.language === "en" ? copy.chat.translateTowardArabic : copy.chat.translateTowardEnglish}
+                </span>
+                <SegmentedControl
+                  compact
+                  ariaLabel={copy.chat.previewGroupLabel}
+                  value={previewMode}
+                  onChange={handlePreviewToggle}
+                  options={[
+                    { value: "source", label: copy.chat.previewSource },
+                    { value: "translation", label: copy.chat.previewTranslation, disabled: isTranslating },
+                  ]}
+                />
               </div>
 
               <div className="editor-pane-badges">
@@ -651,7 +666,7 @@ function NewChatPageContent() {
           </div>
         </section>
 
-        <section className="editor-preview-panel motion-slide-up motion-delay-2">
+        <section className="editor-preview-panel">
           <div className="editor-pane-head editor-pane-head--preview">
             <div>
               <p className="workspace-label">{copy.chat.previewEyebrow}</p>
@@ -672,8 +687,16 @@ function NewChatPageContent() {
 
           <div className="editor-preview-stage">
             {isTranslating ? (
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
-                <TextShimmer>Translating...</TextShimmer>
+              <div className="editor-preview-pending">
+                <TextShimmer>{copy.chat.translating}</TextShimmer>
+              </div>
+            ) : previewIsEmpty ? (
+              <div className="editor-preview-pending">
+                <EmptyState
+                  icon={<FileText size={18} />}
+                  title={copy.chat.previewEmptyTitle}
+                  body={copy.chat.previewEmptyBody}
+                />
               </div>
             ) : (
               <CvPreview

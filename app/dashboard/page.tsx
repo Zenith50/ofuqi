@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { CalendarClock, Clock3, FileDown, Languages, MapPin, Plus, Search, ShieldCheck, Trash2 } from "lucide-react";
+import { CalendarClock, Clock3, FileDown, Files, Languages, MapPin, Plus, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import CvCardPreview from "@/components/cv/CvCardPreview";
+import EmptyState from "@/components/ui/EmptyState";
 import HoverActionButton from "@/components/ui/HoverActionButton";
+import Reveal, { RevealItem } from "@/components/ui/Reveal";
 import TextShimmer from "@/components/ui/TextShimmer";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
 import { getCopy } from "@/lib/app/content";
@@ -14,7 +16,6 @@ import { downloadCv } from "@/lib/cv/downloadClient";
 import {
   buildWorkspaceHref,
   convexRowToProject,
-  resolveProjectLanguage,
   type DemoCvProject,
 } from "@/lib/cv/projects";
 
@@ -110,7 +111,7 @@ export default function DashboardPage() {
 
   return (
     <div className="library-page">
-      <section className="library-hero motion-slide-up">
+      <Reveal className="library-hero">
         <div className="library-hero-copy">
           <p className="workspace-label">{copy.dashboard.headingLabel}</p>
           <h1 className="workspace-title">{copy.dashboard.headingTitle}</h1>
@@ -125,31 +126,33 @@ export default function DashboardPage() {
             {copy.dashboard.createNew ?? "Create new CV"}
           </HoverActionButton>
         </div>
-      </section>
+      </Reveal>
 
       {noticeCopy ? (
-        <div className="inline-notice library-inline-notice motion-slide-up motion-delay-1">
+        <div className="inline-notice library-inline-notice">
           {activeExport ? <TextShimmer>{noticeCopy}</TextShimmer> : noticeCopy}
         </div>
       ) : null}
 
-      <section className="library-summary-grid">
+      <Reveal className="library-summary-grid" stagger>
         {summaryCards.map((item, index) => {
-          const Icon = summaryIcons[index];
+          const Icon = summaryIcons[index] ?? Clock3;
 
           return (
-            <article key={item.label} className={`library-summary-card motion-slide-up motion-delay-${Math.min(index + 1, 3)}`}>
-              <span className="library-summary-icon">
-                <Icon />
-              </span>
-              <strong>{item.value}</strong>
-              <span>{item.label}</span>
-            </article>
+            <RevealItem key={item.label}>
+              <article className="library-summary-card">
+                <span className="library-summary-icon">
+                  <Icon />
+                </span>
+                <strong>{item.value}</strong>
+                <span>{item.label}</span>
+              </article>
+            </RevealItem>
           );
         })}
-      </section>
+      </Reveal>
 
-      <section className="library-section motion-slide-up motion-delay-2">
+      <section className="library-section">
         <div className="library-section-head">
           <div className="library-section-head-copy">
             <h2>{copy.dashboard.libraryTitle}</h2>
@@ -173,29 +176,33 @@ export default function DashboardPage() {
         </div>
 
         {isLoading ? (
-          <div className="library-empty-state">
-            <TextShimmer>{copy.common.loadingWorkspace ?? "Loading projects…"}</TextShimmer>
-          </div>
+          <EmptyState
+            icon={<Files size={18} />}
+            title={copy.dashboard.loadingLibrary}
+            body={copy.common.loadingWorkspace}
+          />
         ) : filteredProjects.length === 0 && query.trim() ? (
-          <article className="library-empty-state">
-            <p>{copy.dashboard.emptySearch}</p>
-          </article>
+          <EmptyState icon={<Search size={18} />} title={copy.dashboard.emptySearchTitle} body={copy.dashboard.emptySearch} />
         ) : filteredProjects.length === 0 ? (
-          <article className="library-empty-state library-empty-state--cta">
-            <p>{copy.dashboard.emptyLibrary ?? "You haven't created any CVs yet."}</p>
-            <HoverActionButton href="/dashboard/templates">
-              <Plus size={16} />
-              {copy.dashboard.createNew ?? "Create your first CV"}
-            </HoverActionButton>
-          </article>
+          <EmptyState
+            icon={<Files size={18} />}
+            title={copy.dashboard.emptyLibraryTitle}
+            body={copy.dashboard.emptyLibrary}
+            action={
+              <HoverActionButton href="/dashboard/templates">
+                <Plus size={16} />
+                {copy.dashboard.createNew}
+              </HoverActionButton>
+            }
+          />
         ) : (
           <div className="library-card-grid">
-            {filteredProjects.map((project, index) => {
+            {filteredProjects.map((project) => {
               const displayLanguage = project.variant.language;
               const displayVariant = project.variant;
 
               return (
-                <article key={project.id} className={`library-card motion-slide-up motion-delay-${Math.min(index + 1, 4)}`}>
+                <article key={project.id} className="library-card">
                   <CvCardPreview
                     data={displayVariant}
                     templateKey={project.shared.templateKey}

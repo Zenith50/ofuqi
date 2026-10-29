@@ -3,12 +3,14 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
+import Magnetic from "@/components/ui/Magnetic";
 
 type HoverActionButtonProps = {
   children: ReactNode;
   className?: string;
   href?: string;
   variant?: "primary" | "secondary";
+  magnetic?: boolean;
 } & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export default function HoverActionButton({
@@ -16,18 +18,18 @@ export default function HoverActionButton({
   className,
   href,
   variant = "primary",
+  magnetic,
   type = "button",
+  disabled,
   ...props
 }: HoverActionButtonProps) {
-  const sharedClassName = [
-    "hover-action-button",
-    `hover-action-button--${variant}`,
-    className,
-  ]
+  const sharedClassName = ["hover-action-button", `hover-action-button--${variant}`, className]
     .filter(Boolean)
     .join(" ");
+  const textLabel = typeof children === "string" || typeof children === "number";
+  const pull = magnetic ?? variant === "primary";
 
-  const content = (
+  const content = textLabel ? (
     <>
       <span className="hover-action-button__label hover-action-button__label--idle">{children}</span>
       <span className="hover-action-button__label hover-action-button__label--hover" aria-hidden="true">
@@ -36,19 +38,26 @@ export default function HoverActionButton({
       </span>
       <span className="hover-action-button__fill" aria-hidden="true" />
     </>
+  ) : (
+    <>
+      <span className="hover-action-button__label">{children}</span>
+      <span className="hover-action-button__fill" aria-hidden="true" />
+    </>
   );
 
-  if (href) {
-    return (
-      <Link href={href} className={sharedClassName} aria-label={typeof children === "string" ? children : undefined}>
-        {content}
-      </Link>
-    );
-  }
-
-  return (
-    <button type={type} className={sharedClassName} {...props}>
+  const control = href ? (
+    <Link href={href} className={sharedClassName} aria-label={textLabel ? String(children) : undefined}>
+      {content}
+    </Link>
+  ) : (
+    <button type={type} className={sharedClassName} disabled={disabled} {...props}>
       {content}
     </button>
   );
+
+  if (!pull || disabled) {
+    return control;
+  }
+
+  return <Magnetic disabled={disabled}>{control}</Magnetic>;
 }

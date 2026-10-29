@@ -1,6 +1,7 @@
 "use client";
 
 import HoverActionButton from "@/components/ui/HoverActionButton";
+import Reveal, { RevealItem } from "@/components/ui/Reveal";
 import CvCardPreview from "@/components/cv/CvCardPreview";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
 import { getCopy } from "@/lib/app/content";
@@ -13,7 +14,7 @@ export default function TemplatesPage() {
 
   return (
     <div className="library-page">
-      <section className="library-hero motion-slide-up">
+      <Reveal className="library-hero">
         <div className="library-hero-copy">
           <p className="workspace-label">{copy.templates.headingLabel}</p>
           <h1 className="workspace-title">{copy.templates.headingTitle}</h1>
@@ -21,20 +22,21 @@ export default function TemplatesPage() {
         </div>
 
         <HoverActionButton href="/chat/new">{copy.templates.primary}</HoverActionButton>
-      </section>
+      </Reveal>
 
-      <section className="library-card-grid motion-slide-up motion-delay-1">
+      <Reveal className="library-card-grid" stagger>
         {copy.templates.cards.map((card, index) => {
           const templateKey = CV_TEMPLATE_KEYS[index] ?? "ats";
           const starterProject = createStarterCvProject(templateKey);
           const previewVariant = starterProject.variant;
 
           return (
-            <article key={card.title} className="library-card library-card--template">
+            <RevealItem key={card.title}>
+            <article className="library-card library-card--template">
               <CvCardPreview
                 data={previewVariant}
                 templateKey={templateKey}
-                className={`library-template-stage motion-float motion-delay-${Math.min(index + 1, 3)}`}
+                className="library-template-stage"
               />
 
               <div className="library-card-copy">
@@ -59,9 +61,10 @@ export default function TemplatesPage() {
                 </HoverActionButton>
               </div>
             </article>
+            </RevealItem>
           );
         })}
-      </section>
+      </Reveal>
     </div>
   );
 }

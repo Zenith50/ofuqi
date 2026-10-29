@@ -26,15 +26,16 @@ export function cloneCvData(data: CvData): CvData {
   return JSON.parse(JSON.stringify(data)) as CvData;
 }
 
-export function deepMerge(target: any, source: any): any {
-  if (Array.isArray(source)) return source; // Arrays overwrite completely
-  if (source === null || typeof source !== "object") return source;
+type JsonObject = Record<string, unknown>;
+
+export function deepMerge<T extends JsonObject>(target: T, source: Partial<T>): T {
   const result = { ...target };
   for (const key of Object.keys(source)) {
-    if (source[key] && typeof source[key] === "object" && !Array.isArray(source[key])) {
-      result[key] = deepMerge(result[key] || {}, source[key]);
+    const sourceValue = source[key as keyof T];
+    if (sourceValue && typeof sourceValue === "object" && !Array.isArray(sourceValue)) {
+      result[key as keyof T] = deepMerge((result[key as keyof T] || {}) as JsonObject, sourceValue as JsonObject) as T[keyof T];
     } else {
-      result[key] = source[key];
+      result[key as keyof T] = sourceValue as T[keyof T];
     }
   }
   return result;

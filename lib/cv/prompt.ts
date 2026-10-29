@@ -7,18 +7,20 @@
  *   RTF    → Role, Task, Format
  *
  * Token budget: ~850 tokens (system) + CV JSON payload.
- * Models: Groq llama-3.3-70b-versatile (primary), Pollinations (fallback).
+ * Models: Groq llama-3.3-70b-versatile (primary).
  */
 
 /* ── helpers ────────────────────────────────────────────── */
 
-function minimizeJson(obj: any): any {
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+function minimizeJson(obj: JsonValue): JsonValue | undefined {
   if (Array.isArray(obj)) {
-    const filtered = obj.map(minimizeJson).filter(Boolean);
+    const filtered = obj.map(minimizeJson).filter((item): item is JsonValue => Boolean(item));
     return filtered.length > 0 ? filtered : undefined;
   }
   if (obj !== null && typeof obj === "object") {
-    const stripped = Object.entries(obj).reduce((acc: any, [k, v]) => {
+    const stripped = Object.entries(obj).reduce<Record<string, JsonValue>>((acc, [k, v]) => {
       const minV = minimizeJson(v);
       if (minV !== undefined && minV !== "" && minV !== null) {
         acc[k] = minV;
@@ -40,7 +42,7 @@ export function getSystemPrompt(
   let optimizedJson = cvStateJson;
   try {
     const parsed =
-      typeof cvStateJson === "string" ? JSON.parse(cvStateJson) : cvStateJson;
+      typeof cvStateJson === "string" ? JSON.parse(cvStateJson) as JsonValue : cvStateJson as JsonValue;
     const minimal = minimizeJson(parsed) || {};
     optimizedJson = JSON.stringify(minimal, null, 2);
   } catch {

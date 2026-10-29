@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildWorkspaceHref,
+  convexRowToProject,
   createStarterCvProject,
   resolveCvProjectTemplateKey,
   resolveLegacyDraftRoute,
@@ -36,6 +37,30 @@ describe("cv project helpers", () => {
     expect(resolveCvProjectTemplateKey("studio")).toBe("ada");
     expect(resolveCvProjectTemplateKey("monolith")).toBe("harvard");
     expect(resolveCvProjectTemplateKey("ATS3")).toBe("ats");
+  });
+
+  it("keeps valid conversation rows and drops unknown locales", () => {
+    const project = convexRowToProject({
+      _id: "project-1",
+      defaultLanguage: "fr",
+      availableLanguages: ["en", "de", "ar"],
+      templateKey: "ats",
+      updatedAt: Date.now(),
+      conversation: {
+        messages: [
+          { role: "user", body: "Tighten the summary", language: "en" },
+          { role: "admin", body: "ignore", language: "en" },
+        ],
+        historyItems: ["Tighten the summary", 12],
+      },
+    });
+
+    expect(project.shared.defaultLanguage).toBe("en");
+    expect(project.shared.availableLanguages).toEqual(["en", "ar"]);
+    expect(project.conversation.messages).toEqual([
+      { role: "user", body: "Tighten the summary", language: "en" },
+    ]);
+    expect(project.conversation.historyItems).toEqual(["Tighten the summary"]);
   });
 
   it("maps legacy draft links into the new project model", () => {

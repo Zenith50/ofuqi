@@ -14,7 +14,7 @@ export const listUserProjects = query({
       .query("cvProjects")
       .withIndex("by_user_updated", (q) => q.eq("userId", userId))
       .order("desc")
-      .collect();
+      .take(100);
   },
 });
 
@@ -144,7 +144,7 @@ export const saveProjectState = mutation({
       throw new Error("Project not found");
     }
 
-    const patch: any = {
+    const patch: Record<string, unknown> = {
       variant,
       conversation,
       updatedAt: Date.now(),

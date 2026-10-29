@@ -25,6 +25,11 @@
       "source": "get-convex/agent-skills",
       "sourceType": "github",
       "computedHash": "7cc29991c446d2ea574dc9abb5fb85c0c9a7f3ef3af4c94454eef45017bda794"
+    },
+    "excalidraw-diagram": {
+      "source": "coleam00/excalidraw-diagram-skill",
+      "sourceType": "github",
+      "computedHash": "1518f2b4ae190b4ea039e82327d42cd012d6d3f14623b87e7a30c2485e608f1b"
     }
   }
 }

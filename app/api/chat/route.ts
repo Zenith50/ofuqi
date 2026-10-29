@@ -1,21 +1,20 @@
 import { NextResponse } from "next/server";
-import { smartStreamCall, ChatMessage } from "@/lib/llm/router";
-import { getSystemPrompt } from "@/lib/cv/prompt";
+import { isAuthenticatedNextjs } from "@convex-dev/auth/nextjs/server";
 
-// We can use the Edge runtime for faster streaming response times
-export const runtime = "edge";
+import { readJsonBody, parseChatRequestPayload, RequestValidationError } from "@/lib/api/validation";
+import { getSystemPrompt } from "@/lib/cv/prompt";
+import { smartStreamCall, type ChatMessage } from "@/lib/llm/router";
 
 export async function POST(req: Request) {
   try {
-    const { messages, language, cvStateJson } = await req.json();
-
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json({ error: "Invalid messages format" }, { status: 400 });
+    if (!(await isAuthenticatedNextjs())) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
 
+    const { messages, language, cvStateJson } = parseChatRequestPayload(await readJsonBody(req));
     const systemPromptMessage: ChatMessage = {
       role: "system",
-      content: getSystemPrompt(language || "en", typeof cvStateJson === "string" ? cvStateJson : JSON.stringify(cvStateJson || {})),
+      content: getSystemPrompt(language, cvStateJson),
     };
 
     // Truncate message history to save tokens. Keep the system prompt + last 6 messages.
@@ -53,7 +52,7 @@ export async function POST(req: Request) {
                   if (content) {
                     controller.enqueue(new TextEncoder().encode(content));
                   }
-                } catch (e) {
+                } catch {
                   // Silently ignore incomplete JSON chunks
                 }
               }
@@ -77,8 +76,12 @@ export async function POST(req: Request) {
         "X-LLM-Model": model,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof RequestValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
     console.error("[API Chat] Error:", error);
-    return NextResponse.json({ error: error.message || "Failed to generate AI response" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to generate AI response" }, { status: 500 });
   }
 }

@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { Suspense, useEffect, useRef, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { Download, FileText, Globe2, Languages, LayoutTemplate, Sparkles } from "lucide-react";
+import { Download, FileText, Globe2, Languages, LayoutTemplate } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import CvPreview from "@/components/cv/CvPreview";
@@ -22,23 +22,24 @@ import { getCopy, type AppLocale } from "@/lib/app/content";
 import { downloadCv } from "@/lib/cv/downloadClient";
 import { getGeneratorLocale, type CvData } from "@/lib/cv/demoData";
 import {
-  appendInstructionToSession,
-  createWorkspaceSessionFromProject,
-  type WorkspaceSessionState,
-} from "@/lib/cv/studioData";
+  createTranslationCacheEntry,
+  normalizeCvData,
+  normalizeCvPatch,
+  readFreshTranslationCache,
+  type TranslationCacheEntry,
+} from "@/lib/cv/validation";
+import { createWorkspaceSessionFromProject, type WorkspaceSessionState } from "@/lib/cv/studioData";
 import {
   buildWorkspaceHref,
   createStarterCvProject,
   convexRowToProject,
-  getProjectVariant,
   resolveLegacyDraftRoute,
-  resolveProjectLanguage,
   resolveCvProjectTemplateKey,
   type DemoCvProject,
 } from "@/lib/cv/projects";
-import { applyWorkspaceInstruction, deepMerge } from "@/lib/cv/workspace";
+import { deepMerge } from "@/lib/cv/workspace";
 
-function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: number) {
+function useDebounce<T extends (...args: never[]) => void>(callback: T, delay: number) {
   const timeoutRef = useRef<number | null>(null);
 
   return useCallback(
@@ -65,6 +66,20 @@ function EditorLoading({ label }: { label: string }) {
 function EditorLoadingFallback() {
   const { locale } = useAppLocale();
   return <EditorLoading label={getCopy(locale).chat.loadingEditor} />;
+}
+
+function isAssistantUpdate(value: unknown): value is { _ofuqi_action: "update"; data: unknown } {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "_ofuqi_action" in value &&
+    (value as { _ofuqi_action?: unknown })._ofuqi_action === "update" &&
+    "data" in value
+  );
+}
+
+function createMessageTimestamp() {
+  return Date.now();
 }
 
 export default function NewChatPage() {
@@ -101,7 +116,7 @@ function NewChatPageContent() {
   // 3. Local React State
   const [project, setProject] = useState<DemoCvProject | null>(null);
   const [session, setSession] = useState<WorkspaceSessionState | null>(null);
-  const [translationCache, setTranslationCache] = useState<any>(null); // Stores the cached translation
+  const [translationCache, setTranslationCache] = useState<TranslationCacheEntry | null>(null);
   const [previewMode, setPreviewMode] = useState<"source" | "translation">("source");
   const [composerValue, setComposerValue] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
@@ -113,6 +128,8 @@ function NewChatPageContent() {
   const [exportFormat, setExportFormat] = useState<ExportFormatChoice>("pdf");
   const [exportLanguage, setExportLanguage] = useState<ExportLanguageChoice>("active");
   const [isExporting, setIsExporting] = useState(false);
+  const exportModalRef = useRef<HTMLElement | null>(null);
+  const exportTriggerRef = useRef<HTMLElement | null>(null);
 
   // 4. Initialization Logic
   const createAttempted = useRef(false);
@@ -130,7 +147,9 @@ function NewChatPageContent() {
         
         setProject(mapped);
         setSession(createWorkspaceSessionFromProject(mapped));
-        setTranslationCache(mapped.translationCache || null);
+        const targetLanguage = mapped.variant.language === "en" ? "ar" : "en";
+        const freshCache = readFreshTranslationCache(mapped.translationCache, mapped.variant, targetLanguage);
+        setTranslationCache(freshCache ? createTranslationCacheEntry(mapped.variant, freshCache) : null);
         const openedName = mapped.variant.personal.fullName.trim();
         const openedCopy = getCopy(initLocaleRef.current);
         setNotice(
@@ -161,7 +180,6 @@ function NewChatPageContent() {
         router.replace(buildWorkspaceHref({ projectId: newId }));
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlProjectId, rawProject, user, selectedTemplateKey, requestedDraftLanguage, createProjectMutation, router]);
 
   // Composer setup
@@ -170,11 +188,11 @@ function NewChatPageContent() {
     value: composerValue,
     onValueChange: setComposerValue,
   });
-  const { characterCount, handleChange: handleComposerChange, maxLength, setValue: setComposerValueLimit, tone: composerTone } = composer;
+  const { characterCount, handleChange: handleComposerChange, maxLength, tone: composerTone } = composer;
 
   // 5. Autosave Implementation
   const debouncedSave = useDebounce(
-    (projectId: Id<"cvProjects">, variant: any, sessionState: WorkspaceSessionState, newCache?: any) => {
+    (projectId: Id<"cvProjects">, variant: CvData, sessionState: WorkspaceSessionState, newCache?: TranslationCacheEntry | null) => {
       setSaveStatus("saving");
       saveProjectStateMutation({
         projectId,
@@ -183,7 +201,7 @@ function NewChatPageContent() {
           messages: sessionState.messages,
           historyItems: sessionState.historyItems,
         },
-        translationCache: newCache,
+        translationCache: newCache ?? null,
       })
         .catch(() => console.error("Autosave failed"))
         .finally(() => {
@@ -201,6 +219,31 @@ function NewChatPageContent() {
   // Auto-scroll ref and effect for chat thread (Bug #4 fix)
   const threadRef = useRef<HTMLDivElement>(null);
 
+  const messageCount = session?.messages.length ?? 0;
+  const latestMessageBody = session?.messages[messageCount - 1]?.body ?? "";
+
+  useEffect(() => {
+    if (!exportOpen) return;
+
+    const previousActiveElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    exportTriggerRef.current = previousActiveElement;
+    exportModalRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isExporting) {
+        setExportOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      exportTriggerRef.current?.focus();
+      exportTriggerRef.current = null;
+    };
+  }, [exportOpen, isExporting]);
+
   useEffect(() => {
     const el = threadRef.current;
     if (!el || !session) return;
@@ -213,11 +256,7 @@ function NewChatPageContent() {
         el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
       });
     }
-  }, [
-    session && session.messages.length,
-    session && session.messages[session.messages.length - 1]?.body,
-    session,
-  ]);
+  }, [latestMessageBody, messageCount, session]);
 
   const applyInstruction = async (rawInstruction: string) => {
     if (!project || !session || isStreaming) return;
@@ -234,7 +273,7 @@ function NewChatPageContent() {
     setComposerValue("");
     setIsStreaming(true);
 
-    const tempUserMessage = { role: "user" as const, body: instruction, language: session.draftData.language, timestamp: Date.now() };
+    const tempUserMessage = { role: "user" as const, body: instruction, language: session.draftData.language, timestamp: createMessageTimestamp() };
     const messagesToSend = [...session.messages.map(m => ({ role: m.role, content: m.body })), { role: "user", content: instruction }];
     
     const tempSessionState = {
@@ -260,15 +299,14 @@ function NewChatPageContent() {
         try {
           const errBody = await response.json();
           if (errBody.error) errStr = errBody.error;
-        } catch(e) {}
+        } catch {}
         throw new Error(errStr);
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let assistantBody = "";
       
-      const startAssistantMsg = { role: "assistant" as const, body: "", language: session.draftData.language, timestamp: Date.now() };
+      const startAssistantMsg = { role: "assistant" as const, body: "", language: session.draftData.language, timestamp: createMessageTimestamp() };
       
       setSession((current) => {
         if (!current) return current;
@@ -278,25 +316,29 @@ function NewChatPageContent() {
         };
       });
 
-      while (true) {
+      const readAssistantBody = async (body: string): Promise<string> => {
         const { done, value } = await reader.read();
-        if (done) break;
-        
-        assistantBody += decoder.decode(value, { stream: true });
+        if (done) return body;
+
+        const nextBody = body + decoder.decode(value, { stream: true });
         
         setSession((current) => {
           if (!current) return current;
           const newMessages = [...current.messages];
           newMessages[newMessages.length - 1] = {
             ...newMessages[newMessages.length - 1],
-            body: assistantBody
+            body: nextBody
           };
           return {
             ...current,
             messages: newMessages
           };
         });
-      }
+
+        return readAssistantBody(nextBody);
+      };
+
+      const assistantBody = await readAssistantBody("");
 
       // Stream done - check for JSON patches
       let finalDraftData = tempSessionState.draftData;
@@ -306,14 +348,23 @@ function NewChatPageContent() {
       const jsonMatch = assistantBody.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i);
       if (jsonMatch) {
          try {
-           const parsed = JSON.parse(jsonMatch[1]);
-           if (parsed._ofuqi_action === "update" && parsed.data) {
-              finalDraftData = deepMerge(finalDraftData, parsed.data);
+           const parsed = JSON.parse(jsonMatch[1]) as unknown;
+           if (isAssistantUpdate(parsed)) {
+              const patch = normalizeCvPatch(parsed.data);
+              const mergedDraft = patch
+                ? normalizeCvData(deepMerge(finalDraftData as Record<string, unknown>, patch as Record<string, unknown>))
+                : null;
+              if (!mergedDraft) {
+                throw new Error("Invalid AI draft update");
+              }
+              finalDraftData = mergedDraft;
               cleanedAssistantBody = assistantBody.replace(jsonMatch[0], "").trim();
               finalHistoryItems = [draftCopy.chat.status.latestAction, ...tempSessionState.historyItems];
+              setTranslationCache(null);
+              setPreviewMode("source");
               setNotice(draftCopy.chat.previewUpdated);
            }
-         } catch(e) {
+         } catch {
            // Ignore malformed json
          }
       }
@@ -338,26 +389,30 @@ function NewChatPageContent() {
          return finalSession;
       });
 
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
-      setNotice(e.message || copy.chat.exportError);
+      setNotice(e instanceof Error ? e.message : copy.chat.exportError);
     } finally {
       setIsStreaming(false);
     }
   };
 
   const fetchCachedOrNewTranslation = async (sourceData: CvData, targetLang: AppLocale) => {
-    if (translationCache && translationCache.language === targetLang) {
-      return translationCache;
+    const cachedData = readFreshTranslationCache(translationCache, sourceData, targetLang);
+    if (cachedData) {
+      return { data: cachedData, cache: translationCache };
     }
+
     const res = await fetch("/api/translate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cvData: sourceData, targetLanguage: targetLang }),
     });
     if (!res.ok) throw new Error("Translation failed");
-    const translatedData = await res.json();
-    return translatedData as CvData;
+    const translatedData = normalizeCvData(await res.json());
+    if (!translatedData) throw new Error("Translation failed");
+
+    return { data: translatedData, cache: createTranslationCacheEntry(sourceData, translatedData) };
   };
 
   const handleExport = async () => {
@@ -378,13 +433,14 @@ function NewChatPageContent() {
              setNotice((copy.chat.exportingProgress as string)
               .replace("{lang}", copy.dashboard.languageNames[job.language])
               .replace("{current}", String(i + 1))
-              .replace("{total}", String(exportJobs.length)) + " (Translating...)");
+              .replace("{total}", String(exportJobs.length)) + ` (${copy.chat.translating})`);
           } else {
-             setNotice(`Translating to ${copy.dashboard.languageNames[job.language]}...`);
+             setNotice(copy.chat.previewTranslationLabel.replace("{lang}", copy.dashboard.languageNames[job.language]));
           }
-          dataToExport = await fetchCachedOrNewTranslation(session.draftData, job.language);
-          setTranslationCache(dataToExport);
-          debouncedSave(project.id as Id<"cvProjects">, session.draftData, session, dataToExport);
+          const translated = await fetchCachedOrNewTranslation(session.draftData, job.language);
+          dataToExport = translated.data;
+          setTranslationCache(translated.cache);
+          debouncedSave(project.id as Id<"cvProjects">, session.draftData, session, translated.cache);
         } else {
           if (exportJobs.length > 1) {
             const langName = copy.dashboard.languageNames[job.language];
@@ -428,12 +484,11 @@ function NewChatPageContent() {
       try {
         setIsTranslating(true);
         // Only translate if we don't have a valid cache, or if it got cleared by an edit
-        if (!translationCache || translationCache.language !== targetLang) {
+        if (!readFreshTranslationCache(translationCache, sourceData, targetLang)) {
           setNotice(copy.chat.translating);
-          
-          const translatedData = await fetchCachedOrNewTranslation(sourceData, targetLang);
-          setTranslationCache(translatedData);
-          debouncedSave(project.id as Id<"cvProjects">, sourceData, session, translatedData);
+          const translated = await fetchCachedOrNewTranslation(sourceData, targetLang);
+          setTranslationCache(translated.cache);
+          debouncedSave(project.id as Id<"cvProjects">, sourceData, session, translated.cache);
           
           setNotice(copy.chat.translationComplete);
           setTimeout(() => setNotice(null), 3000);
@@ -456,7 +511,9 @@ function NewChatPageContent() {
   }
 
   const draftCopy = getCopy(session.draftData.language);
-  const displayData = previewMode === "translation" && translationCache ? translationCache : session.draftData;
+  const targetTranslationLanguage = session.draftData.language === "en" ? "ar" : "en";
+  const cachedTranslation = readFreshTranslationCache(translationCache, session.draftData, targetTranslationLanguage);
+  const displayData = previewMode === "translation" && cachedTranslation ? cachedTranslation : session.draftData;
   const previewIsEmpty =
     !displayData.personal.fullName.trim()
     && !displayData.summary.trim()
@@ -470,11 +527,6 @@ function NewChatPageContent() {
     { label: copy.chat.status.currentLanguage, value: draftCopy.meta.languageName, icon: Languages, tone: "draft" },
     { label: copy.chat.status.interfaceLanguage, value: copy.meta.languageName, icon: Globe2, tone: "interface" },
     { label: copy.chat.status.template, value: activeTemplateName, icon: LayoutTemplate, tone: "template" },
-  ];
-  const previewCards = [
-    { label: copy.chat.status.latestAction, value: session.historyItems[0] ?? copy.chat.status.noAction, icon: Sparkles, tone: "activity" },
-    { label: copy.chat.status.template, value: activeTemplateName, icon: LayoutTemplate, tone: "template" },
-    { label: copy.chat.status.previewState, value: copy.chat.previewDesignNote, icon: Globe2, tone: "preview" },
   ];
 
   return (
@@ -527,7 +579,7 @@ function NewChatPageContent() {
             <div className="editor-pane-tools">
               <div className="editor-language-control">
                 <span className="locale-toggle-label">
-                  {session.draftData.language === "en" ? copy.chat.translateTowardArabic : copy.chat.translateTowardEnglish}
+                  {copy.chat.previewTranslationLabel.replace("{lang}", copy.dashboard.languageNames[targetTranslationLanguage])}
                 </span>
                 <SegmentedControl
                   compact
@@ -535,7 +587,7 @@ function NewChatPageContent() {
                   value={previewMode}
                   onChange={handlePreviewToggle}
                   options={[
-                    { value: "source", label: copy.chat.previewSource },
+                    { value: "source", label: copy.chat.previewOriginal },
                     { value: "translation", label: copy.chat.previewTranslation, disabled: isTranslating },
                   ]}
                 />
@@ -713,8 +765,22 @@ function NewChatPageContent() {
       <AnimatePresence>
         {exportOpen && (
           <>
+            <motion.div
+              className="export-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (!isExporting) setExportOpen(false);
+              }}
+            />
             <motion.aside
+              ref={exportModalRef}
               className="export-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="export-dialog-title"
+              tabIndex={-1}
               initial={{ opacity: 0, scale: 0.96, x: "-50%", y: "-50%" }}
               animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
               exit={{ opacity: 0, scale: 0.96, x: "-50%", y: "-50%" }}
@@ -722,7 +788,7 @@ function NewChatPageContent() {
             >
               <div className="export-drawer-content">
                 <header className="export-header">
-                  <h2>{copy.chat.exportTitle}</h2>
+                  <h2 id="export-dialog-title">{copy.chat.exportTitle}</h2>
                   <p className="muted-copy">{copy.chat.exportBody}</p>
                 </header>
                 

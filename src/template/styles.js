@@ -28,8 +28,8 @@ const FONTS = {
 };
 
 const PDF_FONTS = {
-  regular: 'fonts/Amiri-Regular.ttf',
-  bold: 'fonts/Amiri-Bold.ttf'
+  regular: 'Amiri-Regular.ttf',
+  bold: 'Amiri-Bold.ttf'
 };
 
 const SPACING = {

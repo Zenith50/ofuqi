@@ -1,14 +1,14 @@
-export interface ChatMessage {
+export type ChatMessage = {
   role: "user" | "assistant" | "system";
   content: string;
-}
+};
 
-export interface ProviderConfig {
+export type ProviderConfig = {
   name: string;
   url: string;
   model: string;
   keyEnv: string;
-}
+};
 
 export const PROVIDERS: ProviderConfig[] = [
   {
@@ -35,19 +35,13 @@ export const PROVIDERS: ProviderConfig[] = [
     model: "llama-3.1-8b-instant",
     keyEnv: "GROQ_API_KEY",
   },
-  {
-    name: "Pollinations",
-    url: "https://text.pollinations.ai/openai/v1/chat/completions",
-    model: "openai",
-    keyEnv: "POLLINATIONS_API_KEY",
-  },
 ];
 
-export interface LlmResponse {
+export type LlmResponse = {
   content: string;
   provider: string;
   model: string;
-}
+};
 
 /**
  * Calls the LLM using the waterfall sequence defined in PROVIDERS.
@@ -56,8 +50,8 @@ export interface LlmResponse {
 export async function smartCall(messages: ChatMessage[], options?: { temperature?: number }): Promise<LlmResponse> {
   for (const provider of PROVIDERS) {
     const apiKey = process.env[provider.keyEnv];
-    if (!apiKey && provider.name !== "Pollinations") {
-      continue; // Skip if no key, unless it's Pollinations which can run keyless temporarily
+    if (!apiKey) {
+      continue;
     }
 
     try {
@@ -101,7 +95,7 @@ export async function smartCall(messages: ChatMessage[], options?: { temperature
 export async function smartStreamCall(messages: ChatMessage[], options?: { temperature?: number }): Promise<{ response: Response; provider: string; model: string }> {
   for (const provider of PROVIDERS) {
     const apiKey = process.env[provider.keyEnv];
-    if (!apiKey && provider.name !== "Pollinations") {
+    if (!apiKey) {
       continue;
     }
 

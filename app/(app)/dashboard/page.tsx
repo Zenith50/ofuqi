@@ -100,8 +100,8 @@ export default function DashboardPage() {
     <div className="library-page">
       <section className="library-hero">
         <div className="library-hero-copy">
-          <p className="workspace-label">{copy.dashboard.headingLabel}</p>
           <h1 className="workspace-title">{copy.dashboard.headingTitle}</h1>
+          <p className="script-companion" lang={locale === "ar" ? "en" : "ar"} dir={locale === "ar" ? "ltr" : "rtl"}>{copy.dashboard.companion}</p>
           <p className="muted-copy workspace-heading-copy">{copy.dashboard.headingBody}</p>
         </div>
         <HoverActionButton href="/chat/new">
@@ -152,6 +152,7 @@ export default function DashboardPage() {
           </div>
         ) : libraryProjects.length === 0 ? (
           <EmptyState
+            spread
             title={copy.dashboard.emptyLibraryTitle}
             body={copy.dashboard.emptyLibrary}
             action={(
@@ -179,9 +180,10 @@ export default function DashboardPage() {
             {libraryProjects.map((project) => {
               const matches = filteredProjects.some((item) => item.id === project.id);
               const displayVariant = project.variant;
+              const isLatest = filteredProjects[0]?.id === project.id;
 
               return (
-                <article key={project.id} className="library-card" hidden={!matches}>
+                <article key={project.id} className={isLatest ? "library-card library-card--latest" : "library-card"} hidden={!matches}>
                   <SheetFrame data={displayVariant} templateKey={project.shared.templateKey} />
                   <div className="library-card-facts">
                     <span className="meta-badge">

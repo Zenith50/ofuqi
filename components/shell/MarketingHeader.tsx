@@ -15,15 +15,15 @@ export default function MarketingHeader() {
       <div className="mkt-header-inner">
         <BrandLockup href="/" />
         <nav className="mkt-links" aria-label={copy.common.onThisPage}>
-          <a href="#features">{copy.landing.nav.features}</a>
-          <a href="#gallery">{copy.landing.nav.gallery}</a>
+          <a href="#proofs">{copy.landing.nav.features}</a>
+          <a href="#formats">{copy.landing.nav.gallery}</a>
           <a href="#studio">{copy.landing.nav.studio}</a>
         </nav>
         <details className="mkt-disclosure">
           <summary>{copy.common.onThisPage}</summary>
           <nav aria-label={copy.common.onThisPage}>
-            <a href="#features">{copy.landing.nav.features}</a>
-            <a href="#gallery">{copy.landing.nav.gallery}</a>
+            <a href="#proofs">{copy.landing.nav.features}</a>
+            <a href="#formats">{copy.landing.nav.gallery}</a>
             <a href="#studio">{copy.landing.nav.studio}</a>
           </nav>
         </details>

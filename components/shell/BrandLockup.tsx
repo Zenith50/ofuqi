@@ -14,13 +14,13 @@ export default function BrandLockup({
   const { locale } = useAppLocale();
   const copy = getCopy(locale);
   const content = (
-    <>
-      <span className="brand-mark" aria-hidden="true">{copy.common.brandMark}</span>
-      <span className="brand-copy">
-        <strong>{copy.common.brandTitle}</strong>
-        {subtitle ? <span>{copy.common.brandSubtitle}</span> : null}
+    <span className="brand-copy">
+      <span className="brand-pair">
+        <strong lang="en" dir="ltr">Ofuqi</strong>
+        <span className="brand-arabic" lang="ar" dir="rtl">أُفُقي</span>
       </span>
-    </>
+      {subtitle ? <span className="brand-sub">{copy.common.brandSubtitle}</span> : null}
+    </span>
   );
 
   if (href) {

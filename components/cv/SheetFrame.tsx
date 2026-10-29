@@ -19,7 +19,7 @@ export default function SheetFrame({
   const sheet = data ?? getDemoCv(sampleLocale);
 
   return (
-    <div className={["sheet-frame", className].filter(Boolean).join(" ")} aria-hidden="true">
+    <div className={["sheet-frame", className].filter(Boolean).join(" ")} data-ui="sheet" aria-hidden="true">
       <div className="sheet-frame__scale">
         <CvPreview
           data={sheet}

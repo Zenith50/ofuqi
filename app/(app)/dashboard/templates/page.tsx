@@ -15,8 +15,8 @@ export default function TemplatesPage() {
     <div className="library-page">
       <section className="library-hero">
         <div className="library-hero-copy">
-          <p className="workspace-label">{copy.templates.headingLabel}</p>
           <h1 className="workspace-title">{copy.templates.headingTitle}</h1>
+          <p className="script-companion" lang={locale === "ar" ? "en" : "ar"} dir={locale === "ar" ? "ltr" : "rtl"}>{copy.templates.companion}</p>
           <p className="muted-copy workspace-heading-copy">{copy.templates.headingBody}</p>
         </div>
         <HoverActionButton href="/chat/new">{copy.dashboard.primaryAction}</HoverActionButton>

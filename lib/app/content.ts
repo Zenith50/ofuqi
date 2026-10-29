@@ -50,8 +50,8 @@ export const appCopy = {
     },
     landing: {
       nav: {
-        features: "Features",
-        gallery: "Gallery",
+        features: "Proofs",
+        gallery: "Formats",
         studio: "Studio",
       },
       kicker: "Bilingual CV workspace",
@@ -59,9 +59,23 @@ export const appCopy = {
       titleEmphasis: "that opens doors",
       lead:
         "A studio for Arabic and English CVs, with a live preview and PDF and DOCX export.",
+      sentence: "A studio that sets Arabic and English CVs on one sheet.",
+      kind: "Horizontal, in both scripts.",
+      output: "PDF and DOCX",
+      showcaseTitle: "One measure",
+      proofs: [
+        { id: "ats", title: "ATS", body: "A single column a hiring system can read, in Arabic or English." },
+        { id: "harvard", title: "Harvard", body: "A classic page for roles that still expect a traditional measure." },
+        { id: "ada", title: "ADA", body: "A high-contrast frame that keeps the scan line apart from the story." },
+      ],
+      formatSentence: "Three proofs of one career, in Arabic or English.",
+      ctaWord: "Open",
+      ctaSentence: "Sign in, then write the CV on the page.",
+      places: { signIn: "Sign in", library: "Library", templates: "Templates" },
+      footerTop: "Back to the top",
       actions: {
         primary: "Open the studio",
-        secondary: "Explore templates",
+        secondary: "See the formats",
       },
       heroCaptionLeft: "Series 0.06",
       heroCaptionRight: "Live workspace shell",
@@ -131,7 +145,7 @@ export const appCopy = {
       titleStart: "Access",
       titleEnd: "the studio",
       lead:
-        "Sign in to open your library, edit a CV, and export it in English or Arabic.",
+        "Sign in to open the library and set the sheet in Arabic or English.",
       metrics: [
         { value: "EN / AR", label: "Language modes" },
         { value: "PDF", label: "Live export" },
@@ -200,6 +214,7 @@ export const appCopy = {
       headingBody: "Reopen a project, switch between English and Arabic, and return to editing without losing the draft.",
       headingLabel: "Private workspace",
       headingTitle: "Your bilingual CV library.",
+      companion: "مكتبتك، بالعربية والإنجليزية.",
       headingBodyStart: "You are signed in as",
       headingBodyEnd: "Reopen any project, switch between English and Arabic, and jump back into editing without losing context.",
       primaryAction: "Start a new CV",
@@ -220,7 +235,7 @@ export const appCopy = {
       emptySearchTitle: "No matches",
       emptySearch: "No projects match that search yet.",
       emptyLibraryTitle: "Start your first CV",
-      emptyLibrary: "You haven't created any CVs yet.",
+      emptyLibrary: "The desk is clear. Start a CV and the sheet will sit here in Arabic or English.",
       loadingLibrary: "Loading your library",
       createNew: "Create new CV",
       deleteConfirm: "Are you sure you want to delete this project? This cannot be undone.",
@@ -279,6 +294,7 @@ export const appCopy = {
     templates: {
       headingLabel: "Template system",
       headingTitle: "Choose the template before you refine the wording.",
+      companion: "القالب يضبط الورقة.",
       headingBody: "The template you choose sets both the preview and the exported file.",
       cards: [
         {
@@ -378,6 +394,7 @@ export const appCopy = {
       draftLanguageLabel: "Draft language",
       draftLanguageBody: "Switch between the English and Arabic variants of this project here without changing the surrounding interface.",
       previewEyebrow: "Preview",
+      previewCompanion: "الورقة",
       previewSource: "Original",
       previewTranslation: "Translation",
       translateTowardArabic: "Translate to AR",
@@ -524,8 +541,8 @@ export const appCopy = {
     },
     landing: {
       nav: {
-        features: "المزايا",
-        gallery: "المعرض",
+        features: "البراهين",
+        gallery: "التنسيقات",
         studio: "الاستوديو",
       },
       kicker: "مساحة ذكية لبناء السيرة الذاتية",
@@ -533,9 +550,23 @@ export const appCopy = {
       titleEmphasis: "سيرة تفتح لك الأبواب",
       lead:
         "استوديو للسير الذاتية بالعربية والإنجليزية، مع معاينة مباشرة وتصدير إلى PDF وDOCX.",
+      sentence: "استوديو يصفّ السيرة الذاتية بالعربية والإنجليزية على ورقة واحدة.",
+      kind: "أفقي، في النسختين.",
+      output: "PDF وDOCX",
+      showcaseTitle: "مقياس واحد",
+      proofs: [
+        { id: "ats", title: "ATS", body: "عمود واحد تقرأه أنظمة التوظيف، بالعربية أو الإنجليزية." },
+        { id: "harvard", title: "هارفارد", body: "صفحة كلاسيكية للأدوار التي تنتظر مقياسا تقليديا." },
+        { id: "ada", title: "الواضح", body: "إطار عالي التباين يفصل سطر المسح عن السرد." },
+      ],
+      formatSentence: "ثلاثة براهين لمسار واحد، بالعربية أو الإنجليزية.",
+      ctaWord: "افتح",
+      ctaSentence: "سجّل الدخول، ثم اكتب السيرة على الصفحة.",
+      places: { signIn: "تسجيل الدخول", library: "المكتبة", templates: "القوالب" },
+      footerTop: "إلى أعلى الصفحة",
       actions: {
         primary: "افتح الاستوديو",
-        secondary: "شاهد القوالب",
+        secondary: "شاهد التنسيقات",
       },
       heroCaptionLeft: "الإصدار 0.06",
       heroCaptionRight: "مساحة عمل حية",
@@ -605,7 +636,7 @@ export const appCopy = {
       titleStart: "ادخل إلى",
       titleEnd: "الاستوديو",
       lead:
-        "سجّل الدخول لتفتح مكتبتك، وتعدّل سيرة، وتصدّرها بالعربية أو الإنجليزية.",
+        "سجّل الدخول لتفتح المكتبة وتصفّ الورقة بالعربية أو الإنجليزية.",
       metrics: [
         { value: "ع / EN", label: "أوضاع اللغة" },
         { value: "PDF", label: "تصدير مباشر" },
@@ -674,6 +705,7 @@ export const appCopy = {
       headingBody: "أعد فتح أي مشروع، وانتقل بين العربية والإنجليزية، ثم عد إلى التحرير من دون فقدان المسودة.",
       headingLabel: "مساحة خاصة",
       headingTitle: "مكتبتك الثنائية للسير الذاتية.",
+      companion: "Your library, in English and Arabic.",
       headingBodyStart: "أنت مسجل الدخول باسم",
       headingBodyEnd: "افتح أي مشروع من جديد، وانتقل بين العربية والإنجليزية، ثم عد إلى التحرير من دون فقدان السياق.",
       primaryAction: "ابدأ سيرة جديدة",
@@ -694,7 +726,7 @@ export const appCopy = {
       emptySearchTitle: "لا توجد نتائج",
       emptySearch: "لا توجد مشاريع تطابق هذا البحث حاليا.",
       emptyLibraryTitle: "ابدأ سيرتك الأولى",
-      emptyLibrary: "لم تنشئ أي سيرة ذاتية بعد.",
+      emptyLibrary: "الطاولة فارغة. ابدأ سيرة لتجلس الورقة هنا بالعربية أو الإنجليزية.",
       loadingLibrary: "جاري تحميل المكتبة",
       createNew: "أنشئ سيرة ذاتية",
       deleteConfirm: "هل تريد حذف هذا المشروع؟ لا يمكن التراجع عن هذا الإجراء.",
@@ -753,6 +785,7 @@ export const appCopy = {
     templates: {
       headingLabel: "نظام القوالب",
       headingTitle: "اختر القالب قبل أن تعمّق الصياغة.",
+      companion: "The template sets the sheet.",
       headingBody: "القالب الذي تختاره يحدّد المعاينة والملف المصدَّر معا.",
       cards: [
         {
@@ -852,6 +885,7 @@ export const appCopy = {
       draftLanguageLabel: "لغة المسودة",
       draftLanguageBody: "يمكنك التنقل من هنا بين النسختين العربية والإنجليزية للمشروع نفسه من دون تغيير لغة الواجهة.",
       previewEyebrow: "المعاينة",
+      previewCompanion: "The sheet",
       previewSource: "الأصل",
       previewTranslation: "الترجمة",
       translateTowardArabic: "ترجم إلى العربية",

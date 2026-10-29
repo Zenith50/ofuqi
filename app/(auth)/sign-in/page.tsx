@@ -185,12 +185,14 @@ export default function SignInPage() {
         </div>
       </motion.section>
 
-      <aside className="auth-story">
-        <p className="section-kicker">{copy.auth.kicker}</p>
-        <p className="auth-story-title">
-          <span>{copy.auth.titleStart}</span> <span>{copy.auth.titleEnd}</span>
+            <aside className="auth-story">
+        <p className="auth-monument" lang={locale === "ar" ? "ar" : "en"} dir={locale === "ar" ? "rtl" : "ltr"}>
+          {locale === "ar" ? "أُفُقي" : "Ofuqi"}
         </p>
-        <p className="muted-copy">{copy.auth.lead}</p>
+        <p className="auth-companion" lang={locale === "ar" ? "en" : "ar"} dir={locale === "ar" ? "ltr" : "rtl"}>
+          {locale === "ar" ? "Ofuqi" : "أُفُقي"}
+        </p>
+        <p className="hero-note">{copy.auth.lead}</p>
         <SheetFrame templateKey="harvard" sampleLocale={locale} className="sheet-frame--auth" />
       </aside>
     </div>

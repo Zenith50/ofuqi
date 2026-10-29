@@ -177,6 +177,7 @@ function NewChatPageContent() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [sheetArriving, setSheetArriving] = useState(false);
   const [arrivalFrom, setArrivalFrom] = useState<number | null>(null);
+  const [openedOnBlank, setOpenedOnBlank] = useState<boolean | null>(null);
   const exportModalRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const wasStreamingRef = useRef(false);
@@ -203,7 +204,6 @@ function NewChatPageContent() {
         loadedProjectId.current = rawProject._id;
         const mapped = convexRowToProject(rawProject);
         // Convex delivers the saved project outside this render. The editor copies it in once.
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- external query result, not derived state
         setProject(mapped);
         setSession(createWorkspaceSessionFromProject(mapped));
         const targetLanguage = mapped.variant.language === "en" ? "ar" : "en";
@@ -275,7 +275,6 @@ function NewChatPageContent() {
   const messageCount = session?.messages.length ?? 0;
   const latestMessageBody = session?.messages[messageCount - 1]?.body ?? "";
   const seenMessageCount = useRef(messageCount);
-  const openedOnBlank = useRef<boolean | null>(null);
 
   useEffect(() => {
     const thread = threadRef.current;
@@ -297,8 +296,6 @@ function NewChatPageContent() {
     const delta = messageCount - seenMessageCount.current;
 
     if (delta > 0 && delta <= 2 && seenMessageCount.current > 0) {
-      // Message appends arrive from the chat stream, outside this render.
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- external stream append
       setArrivalFrom(seenMessageCount.current);
     } else if (delta < 0) {
       setArrivalFrom(null);
@@ -605,11 +602,11 @@ function NewChatPageContent() {
       : session.draftData;
   const previewBlank = previewDraft ? isBlankDraft(previewDraft) : true;
 
-  if (openedOnBlank.current === null && session) {
-    openedOnBlank.current = previewBlank;
+  if (openedOnBlank === null && session) {
+    setOpenedOnBlank(previewBlank);
   }
 
-  if (openedOnBlank.current === true && !previewBlank && !sheetArriving && reduced === false) {
+  if (openedOnBlank === true && !previewBlank && !sheetArriving && reduced === false) {
     setSheetArriving(true);
   }
 

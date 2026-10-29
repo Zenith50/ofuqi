@@ -20,12 +20,14 @@ export default function SheetFrame({
 
   return (
     <div className={["sheet-frame", className].filter(Boolean).join(" ")} aria-hidden="true">
-      <div className="sheet-frame__scale">
-        <CvPreview
-          data={sheet}
-          previewLocale={getGeneratorLocale(sheet.language)}
-          templateKey={templateKey}
-        />
+      <div className="sheet-cast">
+        <div className="sheet-frame__scale">
+          <CvPreview
+            data={sheet}
+            previewLocale={getGeneratorLocale(sheet.language)}
+            templateKey={templateKey}
+          />
+        </div>
       </div>
     </div>
   );

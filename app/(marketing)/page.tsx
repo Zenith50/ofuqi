@@ -5,7 +5,6 @@ import { motion, useReducedMotion } from "framer-motion";
 import SheetFrame from "@/components/cv/SheetFrame";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
 import HoverActionButton from "@/components/ui/HoverActionButton";
-import TextShimmer from "@/components/ui/TextShimmer";
 import { getCopy } from "@/lib/app/content";
 import { motionEase } from "@/lib/ui/motion";
 import { CV_TEMPLATE_KEYS } from "@/lib/cv/templates";
@@ -25,9 +24,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.24, ease: motionEase }}
           >
-            <p className="section-kicker">
-              <TextShimmer>{copy.landing.kicker}</TextShimmer>
-            </p>
+            <p className="section-kicker">{copy.landing.kicker}</p>
             <h1 className="hero-title">
               <span>{copy.landing.titleStart}</span>{" "}
               <em>{copy.landing.titleEmphasis}</em>

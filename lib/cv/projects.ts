@@ -47,7 +47,7 @@ export function convexRowToProject(row: ConvexCvProjectRow): DemoCvProject {
   return {
     id: row._id as string,
     shared: {
-      templateKey: (row.templateKey ?? "ats") as CvProjectTemplateKey,
+      templateKey: resolveCvProjectTemplateKey(row.templateKey) ?? "ats",
       statusKey: (row.statusKey ?? "draft") as CvProjectStatusKey,
       updatedKey: computeUpdatedKey(row.updatedAt ?? Date.now()),
       defaultLanguage: defaultLang,

@@ -3,8 +3,16 @@ import { cookies } from "next/headers";
 import { Analytics } from "@vercel/analytics/react";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import ConvexClientProvider from "@/components/providers/ConvexClientProvider";
-import { APP_LOCALE_COOKIE_NAME, appCopy, isAppLocale, type AppLocale } from "@/lib/app/content";
+import {
+  APP_LOCALE_COOKIE_NAME,
+  APP_LOCALE_STORAGE_KEY,
+  appCopy,
+  isAppLocale,
+  type AppLocale,
+} from "@/lib/app/content";
 import "./globals.css";
+
+const storedLocaleBootScript = `(function(){try{var stored=localStorage.getItem(${JSON.stringify(APP_LOCALE_STORAGE_KEY)});if(stored==="en"||stored==="ar"){document.documentElement.lang=stored;document.documentElement.dir=stored==="ar"?"rtl":"ltr";}}catch(e){}})();`;
 
 export const metadata: Metadata = {
   title: "Ofuqi - Bilingual CV Workspace",
@@ -19,15 +27,19 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const cookieLocale = cookieStore.get(APP_LOCALE_COOKIE_NAME)?.value;
-  const hasLocaleCookie = isAppLocale(cookieLocale);
-  const initialLocale: AppLocale = hasLocaleCookie ? cookieLocale : "en";
+  const validCookieLocale = isAppLocale(cookieLocale) ? cookieLocale : null;
+  const initialLocale: AppLocale = validCookieLocale ?? "en";
   const initialDirection = appCopy[initialLocale].meta.dir;
+  const allowStoredLocaleOverride = validCookieLocale === null;
 
   return (
     <html lang={initialLocale} dir={initialDirection} data-scroll-behavior="smooth" suppressHydrationWarning>
       <body data-locale={initialLocale}>
+        {allowStoredLocaleOverride ? (
+          <script id="ofuqi-locale-boot" dangerouslySetInnerHTML={{ __html: storedLocaleBootScript }} />
+        ) : null}
         <ConvexAuthNextjsServerProvider>
-          <ConvexClientProvider initialLocale={initialLocale} allowStoredLocaleOverride={!hasLocaleCookie}>
+          <ConvexClientProvider initialLocale={initialLocale} allowStoredLocaleOverride={allowStoredLocaleOverride}>
             {children}
             <Analytics />
           </ConvexClientProvider>

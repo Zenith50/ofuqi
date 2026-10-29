@@ -52,6 +52,109 @@ function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: numb
   );
 }
 
+type FencedJsonBlock = {
+  json: string;
+  start: number;
+  end: number;
+};
+
+function autosaveFailureNotice(locale: AppLocale): string {
+  return locale === "ar"
+    ? "تعذر حفظ المسودة. حاول مرة أخرى."
+    : "Could not save this draft. Please try again.";
+}
+
+function createProjectFailureNotice(locale: AppLocale): string {
+  return locale === "ar"
+    ? "تعذر إنشاء المسودة. ستعود إلى لوحة التحكم."
+    : "Could not create this draft. Returning to the dashboard.";
+}
+
+function summarizeWorkspaceAction(assistantText: string, instruction: string): string {
+  const summary = assistantText.replace(/\s+/g, " ").trim();
+  return summary || instruction.trim();
+}
+
+function isCvUpdatePayload(
+  value: unknown,
+): value is { _ofuqi_action: "update"; data: Record<string, unknown> } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const record = value as { _ofuqi_action?: unknown; data?: unknown };
+  return (
+    record._ofuqi_action === "update" &&
+    !!record.data &&
+    typeof record.data === "object" &&
+    !Array.isArray(record.data)
+  );
+}
+
+/** Brace-balanced object scan so nested CV patches are not cut at the first `}`. */
+function extractBalancedJsonObject(source: string, fromIndex: number): { json: string; end: number } | null {
+  const start = source.indexOf("{", fromIndex);
+  if (start < 0) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = start; index < source.length; index += 1) {
+    const char = source[index];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (char === "\"") inString = false;
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = true;
+      continue;
+    }
+    if (char === "{") {
+      depth += 1;
+      continue;
+    }
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return { json: source.slice(start, index + 1), end: index + 1 };
+      }
+    }
+  }
+
+  return null;
+}
+
+function extractLastFencedJsonObject(source: string): FencedJsonBlock | null {
+  const opener = /```(?:json)?/gi;
+  let match: RegExpExecArray | null = opener.exec(source);
+  let found: FencedJsonBlock | null = null;
+
+  while (match) {
+    const extracted = extractBalancedJsonObject(source, match.index + match[0].length);
+    if (extracted) {
+      const closer = /^\s*```/.exec(source.slice(extracted.end));
+      if (closer) {
+        found = {
+          json: extracted.json,
+          start: match.index,
+          end: extracted.end + closer[0].length,
+        };
+      }
+    }
+    match = opener.exec(source);
+  }
+
+  return found;
+}
+
 export default function NewChatPage() {
   return (
     <Suspense fallback={
@@ -96,33 +199,77 @@ function NewChatPageContent() {
   const [notice, setNotice] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   
   // Export states
   const [exportOpen, setExportOpen] = useState(false);
   const [exportFormat, setExportFormat] = useState<ExportFormatChoice>("pdf");
   const [exportLanguage, setExportLanguage] = useState<ExportLanguageChoice>("active");
   const [isExporting, setIsExporting] = useState(false);
+  const [trackedUrlProjectId, setTrackedUrlProjectId] = useState<string | null>(urlProjectId);
 
   // 4. Initialization Logic
   const createAttempted = useRef(false);
-  const loadedProjectId = useRef<string | null>(null);
+  const isMountedRef = useRef(true);
+  const saveAttemptRef = useRef(0);
+  const isStreamingRef = useRef(false);
+  const workspaceEpochRef = useRef(0);
+  const threadStickRef = useRef(true);
+  const threadMessageCountRef = useRef(0);
+  const threadAdjustingScrollRef = useRef(false);
 
   // Capture locale at mount time for use in init logic without adding it as a dependency
   const initLocaleRef = useRef(locale);
 
+  const loadedConvexId =
+    urlProjectId && rawProject && String(rawProject._id) === urlProjectId ? String(rawProject._id) : null;
+  const urlProjectChanged = trackedUrlProjectId !== urlProjectId;
+  const shouldAdoptLoadedProject = Boolean(loadedConvexId && project?.id !== loadedConvexId);
+
+  // Adopt or drop the draft during render so a previous CV cannot paint or be saved.
+  if (urlProjectChanged || shouldAdoptLoadedProject) {
+    if (urlProjectChanged) setTrackedUrlProjectId(urlProjectId);
+    workspaceEpochRef.current += 1;
+    saveAttemptRef.current += 1;
+    isStreamingRef.current = false;
+    threadStickRef.current = true;
+    threadMessageCountRef.current = 0;
+    setPreviewMode("source");
+    setComposerValue("");
+    setSaveStatus("idle");
+    setIsStreaming(false);
+    setIsTranslating(false);
+    setIsExporting(false);
+    setExportOpen(false);
+
+    if (shouldAdoptLoadedProject && rawProject) {
+      const mapped = convexRowToProject(rawProject);
+      setProject(mapped);
+      setSession(createWorkspaceSessionFromProject(mapped));
+      setTranslationCache(mapped.translationCache || null);
+      setNotice(
+        getCopy(initLocaleRef.current).chat.loadedDraft.replace("{name}", mapped.variant.personal.fullName),
+      );
+    } else {
+      setProject(null);
+      setSession(null);
+      setTranslationCache(null);
+      setNotice(null);
+    }
+  }
+
   useEffect(() => {
-    // A: If we are asking for a specific project, wait until Convex loads it
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    // A: If we are asking for a specific project, wait until Convex loads it.
+    // The draft itself is copied during render; this effect only leaves missing projects.
     if (urlProjectId) {
-      if (rawProject && loadedProjectId.current !== rawProject._id) {
-        loadedProjectId.current = rawProject._id;
-        const mapped = convexRowToProject(rawProject);
-        
-        setProject(mapped);
-        setSession(createWorkspaceSessionFromProject(mapped));
-        setTranslationCache(mapped.translationCache || null);
-        setNotice(getCopy(initLocaleRef.current).chat.loadedDraft.replace("{name}", mapped.variant.personal.fullName));
-      } else if (rawProject === null && loadedProjectId.current === null && user) {
-        // Project doesn't exist or not owned by user
+      if (rawProject === null && user) {
         router.replace("/dashboard");
       }
       return;
@@ -140,11 +287,24 @@ function NewChatPageContent() {
         availableLanguages: starterProject.shared.availableLanguages,
         variant: starterProject.variant,
         conversation: { messages: [], historyItems: [] }, // Initially empty, will populate on first edit
-      }).then((newId) => {
-        router.replace(buildWorkspaceHref({ projectId: newId }));
-      });
+      })
+        .then((newId) => {
+          if (!isMountedRef.current) return;
+          router.replace(buildWorkspaceHref({ projectId: newId }));
+        })
+        .catch((error: unknown) => {
+          console.error("Create project failed", error);
+          if (!isMountedRef.current) return;
+          createAttempted.current = false;
+          const failedNotice = createProjectFailureNotice(initLocaleRef.current);
+          setNotice(failedNotice);
+          window.setTimeout(() => {
+            if (!isMountedRef.current) return;
+            setNotice((current) => (current === failedNotice ? null : current));
+          }, 4000);
+          router.replace("/dashboard");
+        });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlProjectId, rawProject, user, selectedTemplateKey, requestedDraftLanguage, createProjectMutation, router]);
 
   // Composer setup
@@ -157,8 +317,20 @@ function NewChatPageContent() {
 
   // 5. Autosave Implementation
   const debouncedSave = useDebounce(
-    (projectId: Id<"cvProjects">, variant: any, sessionState: WorkspaceSessionState, newCache?: any) => {
-      setSaveStatus("saving");
+    (
+      projectId: Id<"cvProjects">,
+      variant: any,
+      sessionState: WorkspaceSessionState,
+      epoch: number,
+      newCache?: any,
+    ) => {
+      const stillCurrent = workspaceEpochRef.current === epoch;
+      let attemptId = saveAttemptRef.current;
+      if (stillCurrent) {
+        attemptId = saveAttemptRef.current + 1;
+        saveAttemptRef.current = attemptId;
+        setSaveStatus("saving");
+      }
       saveProjectStateMutation({
         projectId,
         variant: variant,
@@ -168,43 +340,117 @@ function NewChatPageContent() {
         },
         translationCache: newCache,
       })
-        .catch(() => console.error("Autosave failed"))
-        .finally(() => {
-          setTimeout(() => {
+        .then(() => {
+          if (!stillCurrent) return;
+          window.setTimeout(() => {
+            if (saveAttemptRef.current !== attemptId) return;
             setSaveStatus("saved");
-            setTimeout(() => setSaveStatus("idle"), 2000);
+            window.setTimeout(() => {
+              if (saveAttemptRef.current !== attemptId) return;
+              setSaveStatus("idle");
+            }, 2000);
           }, 500); // Artificial minimum delay so the "Saving..." flash is visible
+        })
+        .catch((error: unknown) => {
+          console.error("Autosave failed", error);
+          if (!stillCurrent || saveAttemptRef.current !== attemptId) return;
+          setSaveStatus("idle");
+          const saveFailedNotice = autosaveFailureNotice(locale);
+          setNotice(saveFailedNotice);
+          window.setTimeout(() => {
+            setNotice((current) => (current === saveFailedNotice ? null : current));
+          }, 4000);
         });
     },
     800
   );
 
-  const [isStreaming, setIsStreaming] = useState(false);
+  const translationDraftWatchRef = useRef<{ projectId: string; draft: CvData } | null>(null);
 
-  // Auto-scroll ref and effect for chat thread (Bug #4 fix)
+  useEffect(() => {
+    if (!project || !session) return;
+    const draft = session.draftData;
+    const previous = translationDraftWatchRef.current;
+    translationDraftWatchRef.current = { projectId: project.id, draft };
+    if (!previous || previous.projectId !== project.id) return;
+    if (previous.draft !== draft) {
+      setTranslationCache(null);
+    }
+  }, [project, session]);
+
+  // Follow the thread only for a new message, or while the user is already pinned to the bottom.
   const threadRef = useRef<HTMLDivElement>(null);
+  const threadMessageCount = session?.messages.length ?? 0;
+  const threadLastMessageBody =
+    threadMessageCount > 0 ? (session?.messages[threadMessageCount - 1]?.body ?? "") : "";
 
   useEffect(() => {
     const el = threadRef.current;
-    if (!el || !session) return;
-    const msgs = session.messages;
-    if (!msgs || msgs.length === 0) return;
-    // Only auto-scroll if user is near bottom (within 150px)
-    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
-    if (isNearBottom) {
-      requestAnimationFrame(() => {
-        el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    if (!el) return;
+
+    let userActive = false;
+    const markWheelOrTouch = () => {
+      userActive = true;
+      queueMicrotask(() => {
+        if (!el.matches(":active")) userActive = false;
       });
-    }
-  }, [
-    session && session.messages.length,
-    session && session.messages[session.messages.length - 1]?.body,
-    session,
-  ]);
+    };
+    const markPointerDown = () => {
+      userActive = true;
+    };
+    const markPointerUp = () => {
+      userActive = false;
+    };
+    const onScroll = () => {
+      if (threadAdjustingScrollRef.current || !userActive) return;
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      threadStickRef.current = distanceFromBottom < 150;
+    };
+
+    el.addEventListener("wheel", markWheelOrTouch, { passive: true });
+    el.addEventListener("touchmove", markWheelOrTouch, { passive: true });
+    el.addEventListener("pointerdown", markPointerDown);
+    el.addEventListener("pointerup", markPointerUp);
+    el.addEventListener("pointercancel", markPointerUp);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("wheel", markWheelOrTouch);
+      el.removeEventListener("touchmove", markWheelOrTouch);
+      el.removeEventListener("pointerdown", markPointerDown);
+      el.removeEventListener("pointerup", markPointerUp);
+      el.removeEventListener("pointercancel", markPointerUp);
+      el.removeEventListener("scroll", onScroll);
+    };
+  }, [project?.id]);
+
+  useEffect(() => {
+    const el = threadRef.current;
+    if (!el || threadMessageCount === 0) return;
+
+    const isNewMessage = threadMessageCount !== threadMessageCountRef.current;
+    threadMessageCountRef.current = threadMessageCount;
+    if (!isNewMessage && !threadStickRef.current) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      const node = threadRef.current;
+      if (!node) return;
+      if (!isNewMessage && !threadStickRef.current) return;
+      if (isNewMessage) threadStickRef.current = true;
+      threadAdjustingScrollRef.current = true;
+      node.scrollTo({
+        top: node.scrollHeight,
+        behavior: isStreaming ? "auto" : "smooth",
+      });
+      threadAdjustingScrollRef.current = false;
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [threadMessageCount, threadLastMessageBody, isStreaming, project?.id]);
 
   const applyInstruction = async (rawInstruction: string) => {
-    if (!project || !session || isStreaming) return;
-    
+    if (!project || !session || isStreamingRef.current) return;
+    if (urlProjectId && project.id !== urlProjectId) return;
+
     const instruction = rawInstruction.trim();
     const draftLanguage = session.draftData.language;
     const draftCopy = getCopy(draftLanguage);
@@ -214,6 +460,9 @@ function NewChatPageContent() {
       return;
     }
 
+    const epoch = workspaceEpochRef.current;
+    const projectId = project.id as Id<"cvProjects">;
+    isStreamingRef.current = true;
     setComposerValue("");
     setIsStreaming(true);
 
@@ -225,7 +474,10 @@ function NewChatPageContent() {
       messages: [...session.messages, tempUserMessage],
     };
     
-    setSession((current) => current ? tempSessionState : current);
+    setSession((current) => {
+      if (!current || workspaceEpochRef.current !== epoch) return current;
+      return tempSessionState;
+    });
 
     try {
       const response = await fetch("/api/chat", {
@@ -238,8 +490,10 @@ function NewChatPageContent() {
         }),
       });
 
+      if (workspaceEpochRef.current !== epoch) return;
+
       if (!response.ok || !response.body) {
-        let errStr = "Failed to connect to AI";
+        let errStr = copy.chat.aiConnectionFailed;
         try {
           const errBody = await response.json();
           if (errBody.error) errStr = errBody.error;
@@ -254,7 +508,7 @@ function NewChatPageContent() {
       const startAssistantMsg = { role: "assistant" as const, body: "", language: session.draftData.language, timestamp: Date.now() };
       
       setSession((current) => {
-        if (!current) return current;
+        if (!current || workspaceEpochRef.current !== epoch) return current;
         return {
           ...tempSessionState,
           messages: [...tempSessionState.messages, startAssistantMsg]
@@ -262,13 +516,21 @@ function NewChatPageContent() {
       });
 
       while (true) {
+        if (workspaceEpochRef.current !== epoch) {
+          await reader.cancel().catch(() => undefined);
+          return;
+        }
         const { done, value } = await reader.read();
         if (done) break;
         
         assistantBody += decoder.decode(value, { stream: true });
+        if (workspaceEpochRef.current !== epoch) {
+          await reader.cancel().catch(() => undefined);
+          return;
+        }
         
         setSession((current) => {
-          if (!current) return current;
+          if (!current || workspaceEpochRef.current !== epoch) return current;
           const newMessages = [...current.messages];
           newMessages[newMessages.length - 1] = {
             ...newMessages[newMessages.length - 1],
@@ -281,51 +543,72 @@ function NewChatPageContent() {
         });
       }
 
+      if (workspaceEpochRef.current !== epoch) return;
+
       // Stream done - check for JSON patches
       let finalDraftData = tempSessionState.draftData;
       let finalHistoryItems = tempSessionState.historyItems;
       let cleanedAssistantBody = assistantBody;
+      let latestAction = tempSessionState.latestAction;
 
-      const jsonMatch = assistantBody.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i);
-      if (jsonMatch) {
+      const fencedJson = extractLastFencedJsonObject(assistantBody);
+      if (fencedJson) {
          try {
-           const parsed = JSON.parse(jsonMatch[1]);
-           if (parsed._ofuqi_action === "update" && parsed.data) {
+           const parsed: unknown = JSON.parse(fencedJson.json);
+           if (isCvUpdatePayload(parsed)) {
               finalDraftData = deepMerge(finalDraftData, parsed.data);
-              cleanedAssistantBody = assistantBody.replace(jsonMatch[0], "").trim();
-              finalHistoryItems = [draftCopy.chat.status.latestAction, ...tempSessionState.historyItems];
+              cleanedAssistantBody = `${assistantBody.slice(0, fencedJson.start)}${assistantBody.slice(fencedJson.end)}`.trim();
+              latestAction = summarizeWorkspaceAction(cleanedAssistantBody, instruction);
+              finalHistoryItems = [latestAction, ...tempSessionState.historyItems].slice(0, 8);
               setNotice(draftCopy.chat.previewUpdated);
+              setTranslationCache(null);
            }
-         } catch(e) {
+         } catch {
            // Ignore malformed json
          }
       }
 
+      if (workspaceEpochRef.current !== epoch) return;
+
+      const draftChanged = finalDraftData !== tempSessionState.draftData;
+
       setSession((current) => {
-         if (!current) return current;
+         if (!current || workspaceEpochRef.current !== epoch) return current;
          const newMessages = [...current.messages];
          newMessages[newMessages.length - 1] = {
             ...newMessages[newMessages.length - 1],
             body: cleanedAssistantBody
          };
-         
+
          const finalSession = {
             ...current,
             messages: newMessages,
             draftData: finalDraftData,
-            historyItems: finalHistoryItems
+            historyItems: finalHistoryItems,
+            latestAction,
          };
-         
-         debouncedSave(project.id as Id<"cvProjects">, finalSession.draftData, finalSession, null);
-         
+
+         debouncedSave(
+           projectId,
+           finalSession.draftData,
+           finalSession,
+           epoch,
+           draftChanged ? null : undefined,
+         );
+
          return finalSession;
       });
 
-    } catch (e: any) {
-      console.error(e);
-      setNotice(e.message || copy.chat.exportError);
+    } catch (error: unknown) {
+      console.error(error);
+      if (workspaceEpochRef.current !== epoch) return;
+      const message = error instanceof Error ? error.message : "";
+      setNotice(message || copy.chat.exportError);
     } finally {
-      setIsStreaming(false);
+      if (workspaceEpochRef.current === epoch) {
+        isStreamingRef.current = false;
+        setIsStreaming(false);
+      }
     }
   };
 
@@ -338,36 +621,43 @@ function NewChatPageContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cvData: sourceData, targetLanguage: targetLang }),
     });
-    if (!res.ok) throw new Error("Translation failed");
+    if (!res.ok) throw new Error(copy.chat.translationFailed);
     const translatedData = await res.json();
     return translatedData as CvData;
   };
 
   const handleExport = async () => {
     if (!project || !session) return;
+    if (urlProjectId && project.id !== urlProjectId) return;
+    const epoch = workspaceEpochRef.current;
+    const projectId = project.id as Id<"cvProjects">;
+    const sourceData = session.draftData;
+    const savedSession = session;
     try {
       setIsExporting(true);
       setExportOpen(false);
 
-      const activeLang = session.draftData.language;
+      const activeLang = sourceData.language;
       const exportJobs = buildExportJobs(exportFormat, exportLanguage, activeLang);
       
       for (let i = 0; i < exportJobs.length; i++) {
+        if (workspaceEpochRef.current !== epoch) return;
         const job = exportJobs[i];
-        let dataToExport = session.draftData;
+        let dataToExport = sourceData;
         
         if (job.language !== activeLang) {
           if (exportJobs.length > 1) {
              setNotice((copy.chat.exportingProgress as string)
               .replace("{lang}", copy.dashboard.languageNames[job.language])
               .replace("{current}", String(i + 1))
-              .replace("{total}", String(exportJobs.length)) + " (Translating...)");
+              .replace("{total}", String(exportJobs.length)) + ` (${copy.chat.translating})`);
           } else {
-             setNotice(`Translating to ${copy.dashboard.languageNames[job.language]}...`);
+             setNotice(copy.chat.translatingTo.replace("{lang}", copy.dashboard.languageNames[job.language]));
           }
-          dataToExport = await fetchCachedOrNewTranslation(session.draftData, job.language);
+          dataToExport = await fetchCachedOrNewTranslation(sourceData, job.language);
+          if (workspaceEpochRef.current !== epoch) return;
           setTranslationCache(dataToExport);
-          debouncedSave(project.id as Id<"cvProjects">, session.draftData, session, dataToExport);
+          debouncedSave(projectId, sourceData, savedSession, epoch, dataToExport);
         } else {
           if (exportJobs.length > 1) {
             const langName = copy.dashboard.languageNames[job.language];
@@ -384,13 +674,15 @@ function NewChatPageContent() {
         await new Promise((resolve) => window.setTimeout(resolve, 800)); // Delay for toast sequencing
       }
 
+      if (workspaceEpochRef.current !== epoch) return;
       setNotice(copy.chat.exportSuccess);
       setTimeout(() => setNotice(null), 3000);
     } catch {
+      if (workspaceEpochRef.current !== epoch) return;
       setNotice(copy.chat.exportError);
       setTimeout(() => setNotice(null), 3000);
     } finally {
-      setIsExporting(false);
+      if (workspaceEpochRef.current === epoch) setIsExporting(false);
     }
   };
 
@@ -401,32 +693,39 @@ function NewChatPageContent() {
 
   const handlePreviewToggle = async (mode: "source" | "translation") => {
     if (!project || !session) return;
+    if (urlProjectId && project.id !== urlProjectId) return;
+
+    const epoch = workspaceEpochRef.current;
+    const projectId = project.id as Id<"cvProjects">;
+    const sourceData = session.draftData;
+    const savedSession = session;
     
     setPreviewMode(mode);
     
     if (mode === "translation") {
-      const sourceData = session.draftData;
       const targetLang = sourceData.language === "en" ? "ar" : "en";
       
       try {
         setIsTranslating(true);
         // Only translate if we don't have a valid cache, or if it got cleared by an edit
         if (!translationCache || translationCache.language !== targetLang) {
-          setNotice(targetLang === "ar" ? "جاري الترجمة..." : "Translating...");
+          setNotice(copy.chat.translating);
           
           const translatedData = await fetchCachedOrNewTranslation(sourceData, targetLang);
+          if (workspaceEpochRef.current !== epoch) return;
           setTranslationCache(translatedData);
-          debouncedSave(project.id as Id<"cvProjects">, sourceData, session, translatedData);
+          debouncedSave(projectId, sourceData, savedSession, epoch, translatedData);
           
-          setNotice(targetLang === "ar" ? "✓ تمت الترجمة بنجاح" : "✓ Translation complete");
+          setNotice(copy.chat.translationSuccess);
           setTimeout(() => setNotice(null), 3000);
         }
       } catch (error) {
         console.error("Translation failed:", error);
-        setNotice(targetLang === "ar" ? "فشلت الترجمة" : "Translation failed");
+        if (workspaceEpochRef.current !== epoch) return;
+        setNotice(copy.chat.translationFailed);
         setTimeout(() => setNotice(null), 3000);
       } finally {
-        setIsTranslating(false);
+        if (workspaceEpochRef.current === epoch) setIsTranslating(false);
       }
     }
   };
@@ -434,7 +733,8 @@ function NewChatPageContent() {
   // If loading, show shimmer
   if (!project || !session) {
     return (
-      <div className="editor-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="editor-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "1rem" }}>
+        {notice ? <div className="inline-notice library-inline-notice editor-inline-notice">{notice}</div> : null}
         <TextShimmer>{copy.common.loadingWorkspace ?? "Loading workspace..."}</TextShimmer>
       </div>
     );
@@ -506,14 +806,14 @@ function NewChatPageContent() {
 
             <div className="editor-pane-tools">
               <div className="editor-language-control locale-toggle locale-toggle--compact">
-                <span className="locale-toggle-label">{session.draftData.language === "en" ? "Translate to AR" : "Translate to EN"}</span>
-                <div className="locale-toggle-buttons" role="group" aria-label="Preview">
+                <span className="locale-toggle-label">{session.draftData.language === "en" ? copy.chat.translateToAr : copy.chat.translateToEn}</span>
+                <div className="locale-toggle-buttons" role="group" aria-label={copy.chat.previewEyebrow}>
                   <button
                     type="button"
                     className={previewMode === "source" ? "active" : undefined}
                     onClick={() => handlePreviewToggle("source")}
                   >
-                    Original
+                    {copy.chat.previewOriginal}
                   </button>
                   <button
                     type="button"
@@ -521,7 +821,7 @@ function NewChatPageContent() {
                     onClick={() => handlePreviewToggle("translation")}
                     disabled={isTranslating}
                   >
-                    Translation
+                    {copy.chat.previewTranslation}
                   </button>
                 </div>
               </div>
@@ -618,7 +918,7 @@ function NewChatPageContent() {
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
-                    if (!isStreaming) applyInstruction(composerValue);
+                    if (!isStreamingRef.current) applyInstruction(composerValue);
                   }
                 }}
                 rows={3}
@@ -673,7 +973,7 @@ function NewChatPageContent() {
           <div className="editor-preview-stage">
             {isTranslating ? (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
-                <TextShimmer>Translating...</TextShimmer>
+                <TextShimmer>{copy.chat.translating}</TextShimmer>
               </div>
             ) : (
               <CvPreview

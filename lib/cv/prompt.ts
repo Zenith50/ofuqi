@@ -7,7 +7,7 @@
  *   RTF    → Role, Task, Format
  *
  * Token budget: ~850 tokens (system) + CV JSON payload.
- * Models: Groq llama-3.3-70b-versatile (primary), Pollinations (fallback).
+ * Models: Groq openai/gpt-oss-120b (primary), openai/gpt-oss-20b, then Pollinations.
  */
 
 /* ── helpers ────────────────────────────────────────────── */
@@ -117,7 +117,7 @@ RULES:
 • If you are only asking a question and have nothing to update, do NOT output any JSON block.
 • \`language\` must be exactly \`"en"\` or \`"ar"\`.
 • \`endDate\` for a current role must be \`"${presentWord}"\`.
-• Write descriptive text (summary, achievements) in ${langLabel}.
+• Write descriptive text (summary, achievements) in ${langLabel}.${isArabic ? " CV sentences must be Modern Standard Arabic (فصحى), even though the conversational reply stays in عامية مهنية. Do not put dialect into summary or achievement text." : ""}
 • PRESERVE proper nouns exactly as the user typed them: company names (e.g. "Google", "OC"), role titles (e.g. "Senior Software Engineer"), technical terms, and certification names must remain in the user's original language — do NOT translate or transliterate them.
 • For fields like \`company\`, \`role\`, \`institution\`, \`certifications[].name\`, and \`skills[]\`: store the value in whatever language the user provided it.
 • IMPORTANT: If the user explicitly states they do not have a certain field (e.g., "none", "N/A", "skip", "I don't have it"), DO NOT write those words into the JSON. Instead, completely omit that field or set it to an empty string \`""\`.

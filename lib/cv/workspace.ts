@@ -26,17 +26,124 @@ export function cloneCvData(data: CvData): CvData {
   return JSON.parse(JSON.stringify(data)) as CvData;
 }
 
-export function deepMerge(target: any, source: any): any {
-  if (Array.isArray(source)) return source; // Arrays overwrite completely
-  if (source === null || typeof source !== "object") return source;
-  const result = { ...target };
-  for (const key of Object.keys(source)) {
-    if (source[key] && typeof source[key] === "object" && !Array.isArray(source[key])) {
-      result[key] = deepMerge(result[key] || {}, source[key]);
-    } else {
-      result[key] = source[key];
-    }
+const PERSONAL_FIELDS = ["fullName", "jobTitle", "email", "phone", "location", "linkedin", "website"] as const;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readStringList(value: unknown): string[] | null {
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) return null;
+  return [...value];
+}
+
+function readOptionalString(record: Record<string, unknown>, key: string): string | undefined | null {
+  if (!(key in record)) return undefined;
+  return typeof record[key] === "string" ? record[key] : null;
+}
+
+function readList<T>(value: unknown, readItem: (item: unknown) => T | null): T[] | null {
+  if (!Array.isArray(value)) return null;
+  const items: T[] = [];
+  for (const entry of value) {
+    const item = readItem(entry);
+    if (!item) return null;
+    items.push(item);
   }
+  return items;
+}
+
+function readExperienceItem(value: unknown): CvData["experience"][number] | null {
+  if (!isRecord(value)) return null;
+  const { company, role, startDate, endDate, achievements } = value;
+  const achievementList = readStringList(achievements);
+  if (
+    typeof company !== "string" ||
+    typeof role !== "string" ||
+    typeof startDate !== "string" ||
+    typeof endDate !== "string" ||
+    !achievementList
+  ) {
+    return null;
+  }
+
+  return { company, role, startDate, endDate, achievements: achievementList };
+}
+
+function readEducationItem(value: unknown): CvData["education"][number] | null {
+  if (!isRecord(value)) return null;
+  const { institution, degree } = value;
+  if (typeof institution !== "string" || typeof degree !== "string") return null;
+
+  const startDate = readOptionalString(value, "startDate");
+  const endDate = readOptionalString(value, "endDate");
+  const details = readOptionalString(value, "details");
+  if (startDate === null || endDate === null || details === null) return null;
+
+  return {
+    institution,
+    degree,
+    ...(startDate === undefined ? {} : { startDate }),
+    ...(endDate === undefined ? {} : { endDate }),
+    ...(details === undefined ? {} : { details }),
+  };
+}
+
+function readCertificationItem(value: unknown): NonNullable<CvData["certifications"]>[number] | null {
+  if (!isRecord(value) || typeof value.name !== "string") return null;
+  const issuer = readOptionalString(value, "issuer");
+  const date = readOptionalString(value, "date");
+  if (issuer === null || date === null) return null;
+
+  return {
+    name: value.name,
+    ...(issuer === undefined ? {} : { issuer }),
+    ...(date === undefined ? {} : { date }),
+  };
+}
+
+function readLanguageItem(value: unknown): NonNullable<CvData["languages"]>[number] | null {
+  if (!isRecord(value)) return null;
+  const { name, level } = value;
+  if (typeof name !== "string" || typeof level !== "string") return null;
+  return { name, level };
+}
+
+function mergePersonal(current: CvData["personal"], source: unknown): CvData["personal"] {
+  if (!isRecord(source)) return current;
+
+  const next: CvData["personal"] = { ...current };
+  for (const field of PERSONAL_FIELDS) {
+    const value = source[field];
+    if (typeof value === "string") next[field] = value;
+  }
+  return next;
+}
+
+export function deepMerge(target: CvData, source: unknown): CvData {
+  const result = cloneCvData(target);
+  if (!isRecord(source)) return result;
+
+  if (source.language === "en" || source.language === "ar") result.language = source.language;
+  if (typeof source.summary === "string") result.summary = source.summary;
+
+  result.personal = mergePersonal(result.personal, source.personal);
+
+  const experience = readList(source.experience, readExperienceItem);
+  if (experience !== null) result.experience = experience;
+
+  const education = readList(source.education, readEducationItem);
+  if (education !== null) result.education = education;
+
+  const skills = readStringList(source.skills);
+  if (skills !== null) result.skills = skills;
+
+  const certifications = readList(source.certifications, readCertificationItem);
+  if (certifications !== null) result.certifications = certifications;
+
+  const languages = readList(source.languages, readLanguageItem);
+  if (languages !== null) result.languages = languages;
+
   return result;
 }
 
@@ -99,17 +206,11 @@ export function applyWorkspaceInstruction(
   }
 
   if (matchesAchievementRequest(locale, lowerInstruction, trimmedInstruction)) {
-    const firstExperience = nextData.experience[0];
-
-    if (firstExperience) {
-      const achievement = buildQuantifiedAchievement(nextData, locale);
-
-      if (!firstExperience.achievements.includes(achievement)) {
-        firstExperience.achievements = [achievement, ...firstExperience.achievements];
-      }
-
+    if (nextData.experience[0]) {
       appliedChanges.push(
-        locale === "ar" ? "أضفت إنجازا رقميا في أول خبرة" : "I added a quantified achievement to the lead experience entry",
+        locale === "ar"
+          ? "ما أضفت رقما. اذكر نتيجة يمكنك الدفاع عنها، مثل نسبة أو مدة أو حجم فريق أو إيراد، وسأكتبها كما قلتها"
+          : "I did not add a number. Tell me a result you can defend, such as a percentage, time saved, team size, or revenue, and I will use your words",
       );
     }
   }
@@ -182,32 +283,6 @@ function buildFocusedSummary(data: CvData, locale: AppLocale, focusText: string)
   return locale === "ar"
     ? `${baseSummary} وتبرز هذه النسخة بشكل أوضح ${focusText}.`
     : `${baseSummary} This revision now places clearer emphasis on ${focusText}.`;
-}
-
-function buildQuantifiedAchievement(data: CvData, locale: AppLocale) {
-  const roleText = `${data.personal.jobTitle} ${data.experience[0]?.role ?? ""}`.toLowerCase();
-
-  if (locale === "ar") {
-    if (roleText.includes("مبيعات")) {
-      return "قدت مبادرة لإعادة توزيع الحسابات الرئيسية ورفع متوسط قيمة الصفقات، مما ساهم في تجاوز الهدف السنوي بنسبة 14% خلال دورة واحدة.";
-    }
-
-    if (roleText.includes("مهندس") || roleText.includes("هندسة")) {
-      return "قدت خطة متابعة يومية أعادت إحدى الحزم الحرجة إلى الجدول الزمني قبل الموعد المتوقع بستة أسابيع مع تقارير أوضح للإدارة التنفيذية.";
-    }
-
-    return "قدت مبادرة تشغيلية حسّنت وضوح التقارير ورفعت قابلية التنبؤ بالتسليم وقدمت صورة أدق للإدارة التنفيذية.";
-  }
-
-  if (roleText.includes("sales")) {
-    return "Exceeded the annual target by 14% after resegmenting key accounts, tightening follow-up cadence, and coaching the field team around higher-value opportunities.";
-  }
-
-  if (roleText.includes("engineer") || roleText.includes("construction")) {
-    return "Recovered a high-priority workstream by 6 weeks through tighter contractor coordination, daily issue tracking, and clearer executive-ready progress reporting.";
-  }
-
-  return "Led a cross-functional improvement initiative that increased delivery predictability and gave leadership a clearer weekly view of progress.";
 }
 
 function buildAssistantReply(locale: AppLocale, appliedChanges: string[]) {

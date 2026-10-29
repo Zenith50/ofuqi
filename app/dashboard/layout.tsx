@@ -123,6 +123,8 @@ export default function DashboardLayout({
   const isDesktopSidebarExpanded = !desktopSidebarCollapsed;
   const CollapseIcon = locale === "ar" ? ChevronsRight : ChevronsLeft;
   const ExpandIcon = locale === "ar" ? ChevronsLeft : ChevronsRight;
+  const closeMenuLabel = copy.dashboard.sidebarClose;
+  const sidebarLabelShift = locale === "ar" ? 1 : -1;
 
   const handleSignOut = async () => {
     await signOut();
@@ -139,9 +141,9 @@ export default function DashboardLayout({
               {expanded ? (
                 <motion.div
                   key="brand-copy"
-                  initial={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0, x: 10 * sidebarLabelShift }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
+                  exit={{ opacity: 0, x: 10 * sidebarLabelShift }}
                   className="library-brand-copy"
                 >
                   <strong>{copy.common.brandTitle}</strong>
@@ -198,9 +200,9 @@ export default function DashboardLayout({
                 {expanded ? (
                   <motion.span
                     key={`${item.href}-label`}
-                    initial={{ opacity: 0, x: -8 }}
+                    initial={{ opacity: 0, x: 8 * sidebarLabelShift }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -8 }}
+                    exit={{ opacity: 0, x: 8 * sidebarLabelShift }}
                     className="library-nav-label"
                   >
                     {item.label}
@@ -261,7 +263,7 @@ export default function DashboardLayout({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileSidebarOpen(false)}
-              aria-label={copy.common.backToDashboard}
+              aria-label={closeMenuLabel}
             />
 
             <motion.aside
@@ -278,11 +280,11 @@ export default function DashboardLayout({
                   type="button"
                   className="library-icon-button"
                   onClick={() => setMobileSidebarOpen(false)}
-                  aria-label={copy.common.backToDashboard}
-              >
-                <X size={18} />
-              </button>
-            </div>
+                  aria-label={closeMenuLabel}
+                >
+                  <X size={18} />
+                </button>
+              </div>
               {renderSidebarBody(true, false)}
             </motion.aside>
           </>

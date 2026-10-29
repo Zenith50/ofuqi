@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildWorkspaceHref,
+  convexRowToProject,
   createStarterCvProject,
   resolveCvProjectTemplateKey,
   resolveLegacyDraftRoute,
@@ -36,6 +37,16 @@ describe("cv project helpers", () => {
     expect(resolveCvProjectTemplateKey("studio")).toBe("ada");
     expect(resolveCvProjectTemplateKey("monolith")).toBe("harvard");
     expect(resolveCvProjectTemplateKey("ATS3")).toBe("ats");
+  });
+
+  it("normalizes a stored template alias when mapping a convex row", () => {
+    const project = convexRowToProject({
+      _id: "project-studio",
+      templateKey: "studio",
+      updatedAt: Date.now(),
+    });
+
+    expect(project.shared.templateKey).toBe("ada");
   });
 
   it("maps legacy draft links into the new project model", () => {

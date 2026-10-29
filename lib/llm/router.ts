@@ -12,27 +12,15 @@ export interface ProviderConfig {
 
 export const PROVIDERS: ProviderConfig[] = [
   {
-    name: "Groq (Llama 3.3 70B)",
-    url: "https://api.groq.com/openai/v1/chat/completions",
-    model: "llama-3.3-70b-versatile",
-    keyEnv: "GROQ_API_KEY",
-  },
-  {
     name: "Groq (GPT OSS 120B)",
     url: "https://api.groq.com/openai/v1/chat/completions",
     model: "openai/gpt-oss-120b",
     keyEnv: "GROQ_API_KEY",
   },
   {
-    name: "Groq (Qwen 3 32B)",
+    name: "Groq (GPT OSS 20B)",
     url: "https://api.groq.com/openai/v1/chat/completions",
-    model: "qwen/qwen3-32b",
-    keyEnv: "GROQ_API_KEY",
-  },
-  {
-    name: "Groq (Llama 3.1 8B Instant)",
-    url: "https://api.groq.com/openai/v1/chat/completions",
-    model: "llama-3.1-8b-instant",
+    model: "openai/gpt-oss-20b",
     keyEnv: "GROQ_API_KEY",
   },
   {
@@ -54,7 +42,13 @@ export interface LlmResponse {
  * Throws an error if all providers fail.
  */
 export async function smartCall(messages: ChatMessage[], options?: { temperature?: number }): Promise<LlmResponse> {
+  const rateLimitedKeys = new Set<string>();
+
   for (const provider of PROVIDERS) {
+    if (rateLimitedKeys.has(provider.keyEnv)) {
+      continue;
+    }
+
     const apiKey = process.env[provider.keyEnv];
     if (!apiKey && provider.name !== "Pollinations") {
       continue; // Skip if no key, unless it's Pollinations which can run keyless temporarily
@@ -76,6 +70,9 @@ export async function smartCall(messages: ChatMessage[], options?: { temperature
 
       if (!response.ok) {
         console.error(`[LLM Router] ${provider.name} failed with status ${response.status}`);
+        if (response.status === 429) {
+          rateLimitedKeys.add(provider.keyEnv);
+        }
         continue; // Try next provider
       }
 
@@ -99,7 +96,13 @@ export async function smartCall(messages: ChatMessage[], options?: { temperature
  * Returns the raw Response object which can be piped to Next.js clients.
  */
 export async function smartStreamCall(messages: ChatMessage[], options?: { temperature?: number }): Promise<{ response: Response; provider: string; model: string }> {
+  const rateLimitedKeys = new Set<string>();
+
   for (const provider of PROVIDERS) {
+    if (rateLimitedKeys.has(provider.keyEnv)) {
+      continue;
+    }
+
     const apiKey = process.env[provider.keyEnv];
     if (!apiKey && provider.name !== "Pollinations") {
       continue;
@@ -122,6 +125,9 @@ export async function smartStreamCall(messages: ChatMessage[], options?: { tempe
 
       if (!response.ok) {
         console.error(`[LLM Router] ${provider.name} failed with status ${response.status}`);
+        if (response.status === 429) {
+          rateLimitedKeys.add(provider.keyEnv);
+        }
         continue;
       }
 

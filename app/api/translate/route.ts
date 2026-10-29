@@ -1,20 +1,127 @@
+import { isAuthenticatedNextjs } from "@convex-dev/auth/nextjs/server";
 import { NextResponse } from "next/server";
+
 import { smartCall, type ChatMessage } from "@/lib/llm/router";
 
 export const runtime = "edge";
 
+const MAX_TRANSLATE_BODY_BYTES = 512 * 1024;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isCvLanguage(value: unknown): value is "en" | "ar" {
+  return value === "en" || value === "ar";
+}
+
+async function readJsonBody(
+  request: Request,
+  maxBytes: number,
+): Promise<{ ok: true; value: unknown } | { ok: false; response: NextResponse }> {
+  const declaredLength = request.headers.get("content-length");
+  if (declaredLength !== null) {
+    if (!/^\d+$/.test(declaredLength)) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "Invalid JSON body." }, { status: 400 }),
+      };
+    }
+    if (Number(declaredLength) > maxBytes) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "Payload too large." }, { status: 413 }),
+      };
+    }
+  }
+
+  if (!request.body) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Invalid JSON body." }, { status: 400 }),
+    };
+  }
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      if (!value) {
+        continue;
+      }
+      received += value.byteLength;
+      if (received > maxBytes) {
+        await reader.cancel();
+        return {
+          ok: false,
+          response: NextResponse.json({ error: "Payload too large." }, { status: 413 }),
+        };
+      }
+      chunks.push(value);
+    }
+  } catch (error) {
+    console.error("[Translate API] Failed to read body:", error);
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Invalid JSON body." }, { status: 400 }),
+    };
+  }
+
+  const bytes = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  try {
+    const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    return { ok: true, value: JSON.parse(text) as unknown };
+  } catch {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Invalid JSON body." }, { status: 400 }),
+    };
+  }
+}
+
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const authenticated = await isAuthenticatedNextjs();
+    if (!authenticated) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const bodyResult = await readJsonBody(req, MAX_TRANSLATE_BODY_BYTES);
+    if (!bodyResult.ok) {
+      return bodyResult.response;
+    }
+
+    const body = bodyResult.value;
+    if (!isRecord(body)) {
+      return NextResponse.json({ error: "Missing payload" }, { status: 400 });
+    }
+
     const { cvData, targetLanguage, existingTargetData } = body;
 
     if (!cvData || !targetLanguage) {
       return NextResponse.json({ error: "Missing payload" }, { status: 400 });
     }
 
+    if (!isCvLanguage(targetLanguage)) {
+      return NextResponse.json({ error: "Invalid target language." }, { status: 400 });
+    }
+
     const langLabel = targetLanguage === "ar" ? "Arabic" : "English";
-    const hasExistingTarget = existingTargetData &&
-      ((existingTargetData.experience?.length > 0) || (existingTargetData.summary?.length > 0));
+    const hasExistingTarget = isRecord(existingTargetData) &&
+      ((Array.isArray(existingTargetData.experience) && existingTargetData.experience.length > 0) ||
+        (typeof existingTargetData.summary === "string" && existingTargetData.summary.length > 0));
 
     let systemContent: string;
 
@@ -65,12 +172,12 @@ RULES:
     let cleanJsonStr = response.content.trim();
     // Remove ```json ... ``` or ``` ... ``` wrappers
     const fenceMatch = cleanJsonStr.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
-    if (fenceMatch) {
+    if (fenceMatch?.[1]) {
       cleanJsonStr = fenceMatch[1].trim();
     }
 
     try {
-      const parsedData = JSON.parse(cleanJsonStr);
+      const parsedData = JSON.parse(cleanJsonStr) as Record<string, unknown>;
       parsedData.language = targetLanguage;
       return NextResponse.json(parsedData);
     } catch {

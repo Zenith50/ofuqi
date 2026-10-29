@@ -9,17 +9,21 @@ import CvCardPreview from "@/components/cv/CvCardPreview";
 import HoverActionButton from "@/components/ui/HoverActionButton";
 import TextShimmer from "@/components/ui/TextShimmer";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
-import { getCopy } from "@/lib/app/content";
+import { appCopy, getCopy, type AppLocale } from "@/lib/app/content";
 import { downloadCv } from "@/lib/cv/downloadClient";
 import {
   buildWorkspaceHref,
   convexRowToProject,
-  resolveProjectLanguage,
   type DemoCvProject,
 } from "@/lib/cv/projects";
 
 type ExportFormat = "pdf" | "docx";
-type DashboardNotice = "loadingExport" | "exportReady" | "exportFailed";
+type DashboardNotice = "loadingExport" | "exportReady" | "exportFailed" | "deleteFailed";
+
+const DELETE_FAILED_FALLBACK: Record<AppLocale, string> = {
+  en: "Could not delete this project. Please try again.",
+  ar: "تعذر حذف هذا المشروع. حاول مرة أخرى.",
+};
 
 const summaryIcons = [FileSummaryIcon, Languages, ShieldCheck];
 
@@ -53,11 +57,14 @@ export default function DashboardPage() {
 
     return libraryProjects.filter((project) => {
       const variant = project.variant;
+      const language = resolveCardLanguage(project);
       const haystack = [
         variant.personal.fullName,
         variant.personal.jobTitle,
+        variant.personal.location,
         variant.summary,
-        getProjectLanguageSummary(copy),
+        language ? appCopy.en.dashboard.languageNames[language] : "",
+        language ? appCopy.ar.dashboard.languageNames[language] : "",
         copy.dashboard.templateNames[project.shared.templateKey],
         copy.dashboard.status[project.shared.statusKey],
       ]
@@ -68,17 +75,22 @@ export default function DashboardPage() {
     });
   }, [copy, libraryProjects, query]);
 
+  const isLoading = rawProjects === undefined;
+  const loadingLabel = copy.common.loadingWorkspace ?? "Loading projects…";
+
   const summaryCards = useMemo(
-    () => [
-      { value: String(libraryProjects.length), label: copy.dashboard.summary.totalDrafts },
+    (): Array<{ value: string | null; label: string }> => [
+      {
+        value: isLoading ? null : String(libraryProjects.length),
+        label: copy.dashboard.summary.totalDrafts,
+      },
       { value: "EN + AR", label: copy.dashboard.summary.bilingual },
       { value: copy.dashboard.summary.exportReadyValue, label: copy.dashboard.summary.exportReady },
     ],
-    [copy, libraryProjects.length],
+    [copy, isLoading, libraryProjects.length],
   );
 
-  const noticeCopy = notice === null ? null : copy.common[notice];
-  const isLoading = rawProjects === undefined;
+  const noticeCopy = resolveDashboardNotice(notice, copy, locale);
 
   const handleExport = async (project: DemoCvProject, format: ExportFormat) => {
     const exportKey = `${project.id}-${format}`;
@@ -101,8 +113,9 @@ export default function DashboardPage() {
     try {
       setDeletingId(projectId);
       await deleteProjectMutation({ projectId: projectId as Id<"cvProjects"> });
+      setNotice((current) => (current === "deleteFailed" ? null : current));
     } catch {
-      // silently fail — Convex will revert optimistic state
+      setNotice("deleteFailed");
     } finally {
       setDeletingId(null);
     }
@@ -128,12 +141,15 @@ export default function DashboardPage() {
       </section>
 
       {noticeCopy ? (
-        <div className="inline-notice library-inline-notice motion-slide-up motion-delay-1">
+        <div
+          className="inline-notice library-inline-notice motion-slide-up motion-delay-1"
+          role={notice === "exportFailed" || notice === "deleteFailed" ? "alert" : "status"}
+        >
           {activeExport ? <TextShimmer>{noticeCopy}</TextShimmer> : noticeCopy}
         </div>
       ) : null}
 
-      <section className="library-summary-grid">
+      <section className="library-summary-grid" aria-busy={isLoading}>
         {summaryCards.map((item, index) => {
           const Icon = summaryIcons[index];
 
@@ -142,7 +158,9 @@ export default function DashboardPage() {
               <span className="library-summary-icon">
                 <Icon />
               </span>
-              <strong>{item.value}</strong>
+              <strong>
+                {item.value === null ? <TextShimmer>{loadingLabel}</TextShimmer> : item.value}
+              </strong>
               <span>{item.label}</span>
             </article>
           );
@@ -168,13 +186,13 @@ export default function DashboardPage() {
                 aria-label={copy.common.searchPlaceholder}
               />
             </label>
-            <span className="pill">{filteredProjects.length}</span>
+            {isLoading ? null : <span className="pill">{filteredProjects.length}</span>}
           </div>
         </div>
 
         {isLoading ? (
-          <div className="library-empty-state">
-            <TextShimmer>{copy.common.loadingWorkspace ?? "Loading projects…"}</TextShimmer>
+          <div className="library-empty-state" role="status">
+            <TextShimmer>{loadingLabel}</TextShimmer>
           </div>
         ) : filteredProjects.length === 0 && query.trim() ? (
           <article className="library-empty-state">
@@ -267,6 +285,36 @@ export default function DashboardPage() {
   );
 }
 
-function getProjectLanguageSummary(copy: ReturnType<typeof getCopy>) {
-  return `${copy.dashboard.languageNames.en} + ${copy.dashboard.languageNames.ar}`;
+function resolveCardLanguage(project: DemoCvProject): AppLocale | null {
+  const candidates = [project.variant.language, project.shared.defaultLanguage];
+
+  for (const candidate of candidates) {
+    if (candidate === "en" || candidate === "ar") return candidate;
+  }
+
+  return null;
+}
+
+function readCopyString(source: object, key: string) {
+  if (!(key in source)) return null;
+  const value = (source as Record<string, unknown>)[key];
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+function resolveDashboardNotice(
+  notice: DashboardNotice | null,
+  copy: ReturnType<typeof getCopy>,
+  locale: AppLocale,
+) {
+  if (notice === null) return null;
+
+  if (notice === "deleteFailed") {
+    return (
+      readCopyString(copy.dashboard, "deleteFailed")
+      ?? readCopyString(copy.common, "deleteFailed")
+      ?? DELETE_FAILED_FALLBACK[locale]
+    );
+  }
+
+  return copy.common[notice];
 }

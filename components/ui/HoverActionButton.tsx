@@ -1,33 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ComponentProps, ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 
-type HoverActionButtonProps = {
+type HoverActionSharedProps = {
   children: ReactNode;
   className?: string;
-  href?: string;
   variant?: "primary" | "secondary";
-} & ButtonHTMLAttributes<HTMLButtonElement>;
+};
 
-export default function HoverActionButton({
-  children,
-  className,
-  href,
-  variant = "primary",
-  type = "button",
-  ...props
-}: HoverActionButtonProps) {
-  const sharedClassName = [
-    "hover-action-button",
-    `hover-action-button--${variant}`,
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+type HoverActionButtonAsButton = HoverActionSharedProps &
+  Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className" | "children">;
 
-  const content = (
+type HoverActionButtonAsLink = HoverActionSharedProps &
+  Omit<ComponentProps<typeof Link>, "className" | "children">;
+
+type HoverActionButtonProps = HoverActionButtonAsButton | HoverActionButtonAsLink;
+
+function actionClassName(variant: "primary" | "secondary", className?: string) {
+  return ["hover-action-button", `hover-action-button--${variant}`, className].filter(Boolean).join(" ");
+}
+
+function ActionContent({ children }: { children: ReactNode }) {
+  return (
     <>
       <span className="hover-action-button__label hover-action-button__label--idle">{children}</span>
       <span className="hover-action-button__label hover-action-button__label--hover" aria-hidden="true">
@@ -37,18 +33,32 @@ export default function HoverActionButton({
       <span className="hover-action-button__fill" aria-hidden="true" />
     </>
   );
+}
 
-  if (href) {
+function isLinkAction(props: HoverActionButtonProps): props is HoverActionButtonAsLink {
+  return "href" in props && props.href != null;
+}
+
+export default function HoverActionButton(props: HoverActionButtonProps) {
+  if (isLinkAction(props)) {
+    const { children, className, variant = "primary", ...linkProps } = props;
+
     return (
-      <Link href={href} className={sharedClassName} aria-label={typeof children === "string" ? children : undefined}>
-        {content}
+      <Link
+        className={actionClassName(variant, className)}
+        aria-label={typeof children === "string" ? children : undefined}
+        {...linkProps}
+      >
+        <ActionContent>{children}</ActionContent>
       </Link>
     );
   }
 
+  const { children, className, variant = "primary", type = "button", ...buttonProps } = props;
+
   return (
-    <button type={type} className={sharedClassName} {...props}>
-      {content}
+    <button type={type} className={actionClassName(variant, className)} {...buttonProps}>
+      <ActionContent>{children}</ActionContent>
     </button>
   );
 }

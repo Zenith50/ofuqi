@@ -11,9 +11,9 @@ type CvCardPreviewProps = {
 
 export default function CvCardPreview({ data, templateKey, className }: CvCardPreviewProps) {
   const contactItems = getPreviewContact(data).slice(0, 3);
-  const experienceItems = data.experience.slice(0, 2);
+  const experienceItems = asArray(data.experience).slice(0, 2);
   const summarySnippet = data.summary;
-  const skills = data.skills.slice(0, templateKey === "ada" ? 4 : 3);
+  const skills = asArray(data.skills).slice(0, templateKey === "ada" ? 4 : 3);
   const rootClassName = [
     "cv-card-preview",
     `cv-card-preview--${templateKey}`,
@@ -63,15 +63,19 @@ export default function CvCardPreview({ data, templateKey, className }: CvCardPr
           </div>
 
           <div className="cv-card-preview__list">
-            {experienceItems.map((item) => (
-              <article key={`${item.company}-${item.role}`} className="cv-card-preview__entry">
-                <div className="cv-card-preview__entry-head">
-                  <strong>{item.role}</strong>
-                  <span>{item.company}</span>
-                </div>
-                <p>{item.achievements[0]}</p>
-              </article>
-            ))}
+            {experienceItems.map((item) => {
+              const leadAchievement = asArray(item.achievements)[0];
+
+              return (
+                <article key={`${item.company}-${item.role}`} className="cv-card-preview__entry">
+                  <div className="cv-card-preview__entry-head">
+                    <strong>{item.role}</strong>
+                    <span>{item.company}</span>
+                  </div>
+                  {leadAchievement ? <p>{leadAchievement}</p> : null}
+                </article>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -102,16 +106,24 @@ export default function CvCardPreview({ data, templateKey, className }: CvCardPr
       </div>
 
       <div className="cv-card-preview__list">
-        {experienceItems.map((item) => (
-          <article key={`${item.company}-${item.role}`} className="cv-card-preview__entry">
-            <div className="cv-card-preview__entry-head">
-              <strong>{item.role}</strong>
-              <span>{item.company}</span>
-            </div>
-            <p>{item.achievements[0]}</p>
-          </article>
-        ))}
+        {experienceItems.map((item) => {
+          const leadAchievement = asArray(item.achievements)[0];
+
+          return (
+            <article key={`${item.company}-${item.role}`} className="cv-card-preview__entry">
+              <div className="cv-card-preview__entry-head">
+                <strong>{item.role}</strong>
+                <span>{item.company}</span>
+              </div>
+              {leadAchievement ? <p>{leadAchievement}</p> : null}
+            </article>
+          );
+        })}
       </div>
     </div>
   );
+}
+
+function asArray<T>(value: readonly T[] | null | undefined): T[] {
+  return Array.isArray(value) ? value.slice() : [];
 }

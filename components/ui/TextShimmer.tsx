@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
-import type { CSSProperties } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { useSyncExternalStore, type CSSProperties } from "react";
 
 type TextShimmerProps = {
   children: string;
@@ -10,12 +10,32 @@ type TextShimmerProps = {
   spread?: number;
 };
 
+function subscribeToHydration() {
+  return () => {};
+}
+
+function getClientSnapshot() {
+  return true;
+}
+
+function getServerSnapshot() {
+  return false;
+}
+
 export default function TextShimmer({
   children,
   className,
   duration = 2.4,
   spread = 3,
 }: TextShimmerProps) {
+  const prefersReducedMotion = useReducedMotion();
+  // The media preference is unavailable during SSR. Stay on static text until the client snapshot says motion is allowed.
+  const isClient = useSyncExternalStore(subscribeToHydration, getClientSnapshot, getServerSnapshot);
+
+  if (!isClient || prefersReducedMotion) {
+    return <span className={className}>{children}</span>;
+  }
+
   return (
     <motion.span
       className={["text-shimmer", className].filter(Boolean).join(" ")}

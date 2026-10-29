@@ -5,7 +5,7 @@ test("landing page renders and switches interface direction", async ({ page }) =
 
   await expect(page.getByRole("heading", { level: 1, name: /Build the CV|اصنع/i })).toBeVisible();
 
-  const localeGroup = page.getByRole("group", { name: /Language|اللغة/i }).first();
+  const localeGroup = page.locator("header").getByRole("group", { name: /Language|اللغة/i });
   await localeGroup.getByRole("button", { name: "AR" }).click();
 
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
@@ -13,9 +13,11 @@ test("landing page renders and switches interface direction", async ({ page }) =
 });
 
 test("protected routes redirect unauthenticated users to sign-in", async ({ page }) => {
-  await page.goto("/dashboard");
+  for (const route of ["/dashboard", "/chat/new"]) {
+    await page.goto(route);
 
-  await expect(page).toHaveURL(/\/sign-in$/);
-  await expect(page.getByRole("heading", { level: 1, name: /Access|دخول|الاستوديو/i })).toBeVisible();
-  await expect(page.getByLabel(/Email|البريد/i)).toBeVisible();
+    await expect(page).toHaveURL(/\/sign-in$/);
+    await expect(page.getByRole("heading", { level: 1, name: /Access|دخول|الاستوديو/i })).toBeVisible();
+    await expect(page.getByLabel(/Email|البريد/i)).toBeVisible();
+  }
 });

@@ -17,14 +17,24 @@ async function generatePdf(data, locale, outputPath, templateKey = 'ats') {
     if (isVercel) {
       const puppeteer = require('puppeteer-core');
       const chromium = require('@sparticuz/chromium-min');
+      // Match the installed @sparticuz/chromium-min@147.0.0 pack. v147 assets are
+      // chromium-v147.0.0-pack.<arch>.tar, and executablePath downloads that URL.
+      const chromiumPackArch = process.arch === 'arm64' ? 'arm64' : 'x64';
+      const chromiumPackUrl =
+        `https://github.com/Sparticuz/chromium/releases/download/v147.0.0/chromium-v147.0.0-pack.${chromiumPackArch}.tar`;
 
       browser = await puppeteer.launch({
         args: [...chromium.args, '--hide-scrollbars', '--disable-web-security', '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath(
-          'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
-        ),
-        headless: chromium.headless,
+        defaultViewport: {
+          deviceScaleFactor: 1,
+          hasTouch: false,
+          height: 1080,
+          isLandscape: true,
+          isMobile: false,
+          width: 1920
+        },
+        executablePath: await chromium.executablePath(chromiumPackUrl),
+        headless: 'shell',
         ignoreHTTPSErrors: true,
       });
     } else {
@@ -176,23 +186,41 @@ function getContactParts(data) {
 }
 
 function injectFontPaths(html) {
+  const needsArabicFonts = html.includes('{{fontRegularPath}}') || html.includes('{{fontBoldPath}}');
+  if (!needsArabicFonts) {
+    return html;
+  }
+
   const fontDir = path.join(process.cwd(), 'fonts');
+  const regularFontPath = path.join(fontDir, PDF_FONTS.regular);
+  const boldFontPath = path.join(fontDir, PDF_FONTS.bold);
+
+  let regularBase64;
+  let boldBase64;
 
   try {
     // Inject fonts as Base64 data URIs to bypass Chromium file:// security blocks
-    const regularBase64 = fs.readFileSync(path.join(fontDir, PDF_FONTS.regular)).toString('base64');
-    const boldBase64 = fs.readFileSync(path.join(fontDir, PDF_FONTS.bold)).toString('base64');
-
-    const fontRegularPath = `data:font/ttf;base64,${regularBase64}`;
-    const fontBoldPath = `data:font/ttf;base64,${boldBase64}`;
-
-    return html
-      .replace(/\{\{fontRegularPath\}\}/g, fontRegularPath)
-      .replace(/\{\{fontBoldPath\}\}/g, fontBoldPath);
+    regularBase64 = fs.readFileSync(regularFontPath).toString('base64');
+    boldBase64 = fs.readFileSync(boldFontPath).toString('base64');
   } catch (error) {
-    console.error("Failed to inject fonts:", error);
-    return html;
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Arabic font injection failed (${regularFontPath}, ${boldFontPath}): ${reason}`,
+      { cause: error }
+    );
   }
+
+  const fontRegularPath = `data:font/ttf;base64,${regularBase64}`;
+  const fontBoldPath = `data:font/ttf;base64,${boldBase64}`;
+  const nextHtml = html
+    .replace(/\{\{fontRegularPath\}\}/g, fontRegularPath)
+    .replace(/\{\{fontBoldPath\}\}/g, fontBoldPath);
+
+  if (nextHtml.includes('{{fontRegularPath}}') || nextHtml.includes('{{fontBoldPath}}')) {
+    throw new Error('Arabic font injection failed: font placeholders were not replaced.');
+  }
+
+  return nextHtml;
 }
 
 function replaceConditionalBlock(template, blockName, isEnabled) {

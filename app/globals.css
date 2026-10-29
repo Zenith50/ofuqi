@@ -194,6 +194,10 @@ html[dir="rtl"] ::-webkit-scrollbar-track {
 .workspace-nav a:focus-visible,
 .auth-toggle button:focus-visible,
 .chat-rail button:focus-visible,
+.library-icon-button:focus-visible,
+.segmented-button:focus-visible,
+.editor-chip-button:focus-visible,
+.editor-ghost-button:focus-visible,
 .input-shell input:focus,
 .workspace-search input:focus,
 .chat-input:focus {
@@ -1562,6 +1566,7 @@ html[dir="rtl"] ::-webkit-scrollbar-track {
 }
 
 .preview-paper {
+  direction: ltr;
   border-radius: 1.3rem;
   padding: 2.35rem 2.5rem;
   background: #ffffff;
@@ -2035,9 +2040,7 @@ html[dir="rtl"] .dashboard-highlight span,
 html[dir="rtl"] .field label,
 html[dir="rtl"] .message-label,
 html[dir="rtl"] .chat-mode-eyebrow,
-html[dir="rtl"] .chat-summary-item span,
-html[dir="rtl"] .preview-paper-label,
-html[dir="rtl"] .preview-paper-role {
+html[dir="rtl"] .chat-summary-item span {
   letter-spacing: 0;
   text-transform: none;
 }
@@ -2087,43 +2090,52 @@ html[dir="rtl"] .landing-nav-links {
   justify-content: flex-start;
 }
 
-html[dir="rtl"] .preview-paper-contact-row {
+html[dir="rtl"] .preview-paper--rtl .preview-paper-label,
+html[dir="rtl"] .preview-paper--rtl .preview-paper-role {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+html[dir="rtl"] .preview-paper--rtl .preview-paper-contact-row {
   justify-content: center;
 }
 
-html[dir="rtl"] .preview-paper-list {
+html[dir="rtl"] .preview-paper--rtl .preview-paper-list {
   padding-inline-start: 0;
   padding-inline-end: 1.15rem;
 }
 
-html[dir="rtl"] .preview-paper-name {
+html[dir="rtl"] .preview-paper--rtl .preview-paper-name {
   text-transform: none;
 }
 
-html[dir="rtl"] .preview-entry-company::before {
+html[dir="rtl"] .preview-paper--rtl .preview-entry-company::before {
   display: none;
 }
 
-html[dir="rtl"] .preview-entry-head {
+html[dir="rtl"] .preview-paper--rtl .preview-entry-head {
   display: grid;
   gap: 0.2rem;
 }
 
-html[dir="rtl"] .preview-entry-main {
+html[dir="rtl"] .preview-paper--rtl .preview-entry-main {
   display: grid;
   gap: 0.2rem;
 }
 
-html[dir="rtl"] .preview-entry-date,
-html[dir="rtl"] .preview-entry-detail {
+html[dir="rtl"] .preview-paper--rtl .preview-entry-date,
+html[dir="rtl"] .preview-paper--rtl .preview-entry-detail {
   text-align: right;
   padding-inline-start: 0;
 }
 
 html[dir="rtl"] .chat-mode-card,
-html[dir="rtl"] .chat-summary-item,
-html[dir="rtl"] .preview-paper,
-html[dir="rtl"] .preview-entry-date {
+html[dir="rtl"] .chat-summary-item {
+  text-align: right;
+}
+
+html[dir="rtl"] .preview-paper--rtl,
+html[dir="rtl"] .preview-paper--rtl .preview-entry-date {
   text-align: right;
 }
 
@@ -2284,6 +2296,16 @@ html[dir="rtl"] .preview-entry-date {
   }
 }
 
+@keyframes textShimmer {
+  from {
+    background-position: 100% center;
+  }
+
+  to {
+    background-position: 0% center;
+  }
+}
+
 .text-shimmer {
   --text-shimmer-base: rgba(209, 223, 227, 0.62);
   --text-shimmer-highlight: rgba(255, 255, 255, 0.98);
@@ -2301,6 +2323,7 @@ html[dir="rtl"] .preview-entry-date {
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
+  animation: textShimmer 2.4s linear infinite;
 }
 
 .hover-action-button {
@@ -3238,8 +3261,11 @@ html[dir="rtl"] .library-sidebar--mobile {
   background:
     linear-gradient(180deg, #fffcf5 0%, #f7eee2 100%);
   color: #2f2117;
-  font-family: "Georgia", "Times New Roman", serif;
   border-top: 3px solid #b8965a;
+}
+
+.cv-card-preview--harvard:not(.cv-card-preview--rtl) {
+  font-family: "Georgia", "Times New Roman", serif;
 }
 
 .cv-card-preview--harvard .cv-card-preview__summary-block,
@@ -3568,7 +3594,8 @@ html[dir="rtl"] .library-sidebar--mobile {
 }
 
 .editor-thread,
-.editor-preview-body {
+.editor-preview-body,
+.editor-preview-stage {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -4042,6 +4069,16 @@ html[dir="rtl"] .editor-brand-copy {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+
+  .text-shimmer {
+    animation: none !important;
+    background-image: none !important;
+    background-position: 0% center !important;
+    background-clip: border-box !important;
+    -webkit-background-clip: border-box !important;
+    -webkit-text-fill-color: var(--text-shimmer-base) !important;
+    color: var(--text-shimmer-base) !important;
   }
 }
 

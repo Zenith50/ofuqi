@@ -14,6 +14,11 @@ type CvPreviewProps = {
 export default function CvPreview({ data, previewLocale, templateKey }: CvPreviewProps) {
   const isArabic = data.language === "ar";
   const contactItems = getPreviewContact(data);
+  const experience = asArray(data.experience);
+  const education = asArray(data.education);
+  const skills = asArray(data.skills);
+  const certifications = asArray(data.certifications);
+  const languages = asArray(data.languages);
   const rootClassName = [
     "preview-paper",
     `preview-paper--${templateKey}`,
@@ -52,41 +57,41 @@ export default function CvPreview({ data, previewLocale, templateKey }: CvPrevie
               </PreviewSidebarSection>
             ) : null}
 
-            {data.skills.length > 0 ? (
+            {skills.length > 0 ? (
               <PreviewSidebarSection label={previewLocale.sections.skills}>
-                <p className="preview-paper-body">{data.skills.join(" \u2022 ")}</p>
+                <p className="preview-paper-body">{skills.join(" \u2022 ")}</p>
               </PreviewSidebarSection>
             ) : null}
 
-            {data.certifications && data.certifications.length > 0 ? (
+            {certifications.length > 0 ? (
               <PreviewSidebarSection label={previewLocale.sections.certifications}>
                 <ul className="preview-paper-list preview-paper-list--sidebar">
-                  {data.certifications.map((item) => (
+                  {certifications.map((item) => (
                     <li key={`${item.name}-${item.date}`}>{formatCertification(item)}</li>
                   ))}
                 </ul>
               </PreviewSidebarSection>
             ) : null}
 
-            {data.languages && data.languages.length > 0 ? (
+            {languages.length > 0 ? (
               <PreviewSidebarSection label={previewLocale.sections.languages}>
-                <p className="preview-paper-body">{data.languages.map((item) => formatLanguageLevel(item)).join(" \u2022 ")}</p>
+                <p className="preview-paper-body">{languages.map((item) => formatLanguageLevel(item)).join(" \u2022 ")}</p>
               </PreviewSidebarSection>
             ) : null}
           </aside>
 
           <div className="preview-paper-main">
-            {data.experience.length > 0 ? (
+            {experience.length > 0 ? (
               <PreviewExperienceSection
-                entries={data.experience}
+                entries={experience}
                 isArabic={isArabic}
                 label={previewLocale.sections.experience}
               />
             ) : null}
 
-            {data.education.length > 0 ? (
+            {education.length > 0 ? (
               <PreviewEducationSection
-                entries={data.education}
+                entries={education}
                 isArabic={isArabic}
                 label={previewLocale.sections.education}
               />
@@ -126,41 +131,41 @@ export default function CvPreview({ data, previewLocale, templateKey }: CvPrevie
         </PreviewContentSection>
       ) : null}
 
-      {data.experience.length > 0 ? (
+      {experience.length > 0 ? (
         <PreviewExperienceSection
-          entries={data.experience}
+          entries={experience}
           isArabic={isArabic}
           label={previewLocale.sections.experience}
         />
       ) : null}
 
-      {data.education.length > 0 ? (
+      {education.length > 0 ? (
         <PreviewEducationSection
-          entries={data.education}
+          entries={education}
           isArabic={isArabic}
           label={previewLocale.sections.education}
         />
       ) : null}
 
-      {data.skills.length > 0 ? (
+      {skills.length > 0 ? (
         <PreviewContentSection label={previewLocale.sections.skills}>
-          <p className="preview-paper-body">{data.skills.join(" \u2022 ")}</p>
+          <p className="preview-paper-body">{skills.join(" \u2022 ")}</p>
         </PreviewContentSection>
       ) : null}
 
-      {data.certifications && data.certifications.length > 0 ? (
+      {certifications.length > 0 ? (
         <PreviewContentSection label={previewLocale.sections.certifications}>
           <ul className="preview-paper-list">
-            {data.certifications.map((item) => (
+            {certifications.map((item) => (
               <li key={`${item.name}-${item.date}`}>{formatCertification(item)}</li>
             ))}
           </ul>
         </PreviewContentSection>
       ) : null}
 
-      {data.languages && data.languages.length > 0 ? (
+      {languages.length > 0 ? (
         <PreviewContentSection label={previewLocale.sections.languages}>
-          <p className="preview-paper-body">{data.languages.map((item) => formatLanguageLevel(item)).join(" \u2022 ")}</p>
+          <p className="preview-paper-body">{languages.map((item) => formatLanguageLevel(item)).join(" \u2022 ")}</p>
         </PreviewContentSection>
       ) : null}
     </div>
@@ -209,35 +214,39 @@ function PreviewExperienceSection({
   return (
     <PreviewContentSection label={label}>
       <div className="preview-entry-stack">
-        {entries.map((item) => (
-          <article key={`${item.company}-${item.role}`} className="preview-entry">
-            <div className="preview-entry-head">
-              {isArabic ? (
-                <div className="preview-entry-main">
-                  <p className="preview-entry-role">{item.role}</p>
-                  <p className="preview-entry-date">{formatDateRange(item.startDate, item.endDate)}</p>
-                  <p className="preview-entry-company">{item.company}</p>
-                </div>
-              ) : (
-                <>
+        {asArray(entries).map((item) => {
+          const achievements = asArray(item.achievements);
+
+          return (
+            <article key={`${item.company}-${item.role}`} className="preview-entry">
+              <div className="preview-entry-head">
+                {isArabic ? (
                   <div className="preview-entry-main">
                     <p className="preview-entry-role">{item.role}</p>
+                    <p className="preview-entry-date">{formatDateRange(item.startDate, item.endDate)}</p>
                     <p className="preview-entry-company">{item.company}</p>
                   </div>
-                  <p className="preview-entry-date">{formatDateRange(item.startDate, item.endDate)}</p>
-                </>
-              )}
-            </div>
+                ) : (
+                  <>
+                    <div className="preview-entry-main">
+                      <p className="preview-entry-role">{item.role}</p>
+                      <p className="preview-entry-company">{item.company}</p>
+                    </div>
+                    <p className="preview-entry-date">{formatDateRange(item.startDate, item.endDate)}</p>
+                  </>
+                )}
+              </div>
 
-            {item.achievements.length > 0 ? (
-              <ul className="preview-paper-list">
-                {item.achievements.map((achievement) => (
-                  <li key={achievement}>{achievement}</li>
-                ))}
-              </ul>
-            ) : null}
-          </article>
-        ))}
+              {achievements.length > 0 ? (
+                <ul className="preview-paper-list">
+                  {achievements.map((achievement) => (
+                    <li key={achievement}>{achievement}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </article>
+          );
+        })}
       </div>
     </PreviewContentSection>
   );
@@ -255,7 +264,7 @@ function PreviewEducationSection({
   return (
     <PreviewContentSection label={label}>
       <div className="preview-entry-stack">
-        {entries.map((item) => (
+        {asArray(entries).map((item) => (
           <article key={`${item.institution}-${item.degree}`} className="preview-entry">
             <div className="preview-entry-head">
               {isArabic ? (
@@ -281,4 +290,8 @@ function PreviewEducationSection({
       </div>
     </PreviewContentSection>
   );
+}
+
+function asArray<T>(value: readonly T[] | null | undefined): T[] {
+  return Array.isArray(value) ? value.slice() : [];
 }

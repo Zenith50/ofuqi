@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
+
 import LocaleToggle from "@/components/ui/LocaleToggle";
 import HoverActionButton from "@/components/ui/HoverActionButton";
 import TextShimmer from "@/components/ui/TextShimmer";
@@ -15,8 +16,18 @@ function getAuthErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
-export default function SignInPage() {
+function safeNextPath(next: string | null) {
+  if (next && next.startsWith("/") && !next.startsWith("//") && !next.includes("\\")) {
+    return next;
+  }
+
+  return "/dashboard";
+}
+
+function SignInPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const destination = safeNextPath(searchParams.get("next"));
   const { locale } = useAppLocale();
   const copy = getCopy(locale);
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -28,16 +39,25 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const emailMissing = email.trim().length === 0;
+  const passwordMissing = password.length === 0;
+
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.replace("/dashboard");
+      router.replace(destination);
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [destination, isAuthenticated, isLoading, router]);
+
+  const selectStep = (nextStep: "signIn" | "signUp") => {
+    setStep(nextStep);
+    setError(null);
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!email || !password) {
+    if (emailMissing || passwordMissing) {
+      setError(copy.auth.errors.invalid);
       return;
     }
 
@@ -46,15 +66,18 @@ export default function SignInPage() {
       setError(null);
 
       const result = await signIn("password", {
-        email,
+        email: email.trim(),
         password,
         flow: step,
-        redirectTo: "/dashboard",
+        redirectTo: destination,
       });
 
       if (result.signingIn) {
-        router.replace("/dashboard");
+        router.replace(destination);
+        return;
       }
+
+      setError(copy.auth.errors.invalid);
     } catch (authError: unknown) {
       const message = getAuthErrorMessage(authError);
 
@@ -125,14 +148,14 @@ export default function SignInPage() {
             <button
               type="button"
               className={step === "signIn" ? "active" : undefined}
-              onClick={() => setStep("signIn")}
+              onClick={() => selectStep("signIn")}
             >
               {copy.auth.tabs.signIn}
             </button>
             <button
               type="button"
               className={step === "signUp" ? "active" : undefined}
-              onClick={() => setStep("signUp")}
+              onClick={() => selectStep("signUp")}
             >
               {copy.auth.tabs.signUp}
             </button>
@@ -142,8 +165,12 @@ export default function SignInPage() {
           <p className="auth-subtitle">{subtitle}</p>
         </header>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          {error ? <div className="auth-error">{error}</div> : null}
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
+          {error ? (
+            <div className="auth-error" id="auth-form-error" role="alert">
+              {error}
+            </div>
+          ) : null}
 
           <div className="field">
             <label htmlFor="email">{copy.auth.form.emailLabel}</label>
@@ -156,6 +183,8 @@ export default function SignInPage() {
                 onChange={(event) => setEmail(event.target.value)}
                 autoComplete="email"
                 required
+                aria-invalid={error && emailMissing ? true : undefined}
+                aria-describedby={error ? "auth-form-error" : undefined}
               />
             </div>
           </div>
@@ -171,6 +200,8 @@ export default function SignInPage() {
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete={step === "signIn" ? "current-password" : "new-password"}
                 required
+                aria-invalid={error && passwordMissing ? true : undefined}
+                aria-describedby={error ? "auth-form-error" : undefined}
               />
             </div>
           </div>
@@ -192,7 +223,7 @@ export default function SignInPage() {
             <button
               type="button"
               className="text-link"
-              onClick={() => setStep(step === "signIn" ? "signUp" : "signIn")}
+              onClick={() => selectStep(step === "signIn" ? "signUp" : "signIn")}
             >
               {step === "signIn" ? copy.auth.footer.switchToSignUp : copy.auth.footer.switchToSignIn}
             </button>
@@ -204,5 +235,24 @@ export default function SignInPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+function SignInFallback() {
+  const { locale } = useAppLocale();
+  const copy = getCopy(locale);
+
+  return (
+    <div className="auth-shell" aria-busy="true">
+      <TextShimmer>{copy.common.loadingWorkspace}</TextShimmer>
+    </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<SignInFallback />}>
+      <SignInPageContent />
+    </Suspense>
   );
 }

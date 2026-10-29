@@ -17,7 +17,21 @@ const {
 const { COLORS, FONT_SIZES, SPACING, PAGE, DIRECTION } = require('../template/styles');
 const { getTemplatePreset, resolveTemplateKey } = require('../template/presets');
 
+function formatLanguageLabel(language) {
+  const name = language && language.name ? language.name : '';
+  if (!language || language.level == null || language.level === '') {
+    return name;
+  }
+  return name + ' (' + language.level + ')';
+}
+
 async function generateDocx(data, locale, outputPath, templateKey = 'ats') {
+  data = {
+    ...data,
+    experience: data.experience || [],
+    education: data.education || [],
+    skills: data.skills || []
+  };
   const preset = getTemplatePreset(resolveTemplateKey(templateKey));
   const isArabic = data.language === 'ar';
   const dir = DIRECTION[data.language];
@@ -167,22 +181,10 @@ async function generateDocx(data, locale, outputPath, templateKey = 'ats') {
     children.push(createSpacer());
   }
 
-  if (preset.key === 'ada') {
-    children.push(createAdaOverviewTable({
-      align,
-      bodyFont,
-      contactParts,
-      data,
-      headingFont,
-      isArabic,
-      locale,
-      makeFont,
-      makeParagraph,
-      makeRun,
-      preset
-    }));
-    children.push(createSpacer());
-  } else if (data.summary) {
+  const experienceSection = [];
+  const educationSection = [];
+
+  if (preset.key !== 'ada' && data.summary) {
     children.push(createSectionHeading(locale.sections.summary, { uppercase: preset.key === 'ats' }));
     children.push(makeParagraph({
       spacing: { after: SPACING.lineSpacing.docx },
@@ -192,11 +194,11 @@ async function generateDocx(data, locale, outputPath, templateKey = 'ats') {
   }
 
   if (data.experience.length > 0) {
-    children.push(createSectionHeading(locale.sections.experience, { uppercase: preset.key === 'ats' }));
+    experienceSection.push(createSectionHeading(locale.sections.experience, { uppercase: preset.key === 'ats' }));
 
     data.experience.forEach((experience, index) => {
       if (isArabic) {
-        children.push(makeParagraph({
+        experienceSection.push(makeParagraph({
           spacing: { before: index > 0 ? 160 : 0, after: 0 },
           children: [
             makeRun(experience.role, { bold: true, fontName: headingFont, color: preset.docx.nameColor })
@@ -205,19 +207,19 @@ async function generateDocx(data, locale, outputPath, templateKey = 'ats') {
 
         const dateText = [experience.startDate, experience.endDate].filter(Boolean).join(' - ');
         if (dateText) {
-          children.push(makeParagraph({
+          experienceSection.push(makeParagraph({
             spacing: { after: 0 },
             children: [makeRun(dateText, { size: FONT_SIZES.small.docx, color: preset.docx.roleColor })]
           }));
         }
 
-        children.push(makeParagraph({
+        experienceSection.push(makeParagraph({
           spacing: { after: 30 },
           children: [makeRun(experience.company)]
         }));
       } else {
         const separator = preset.key === 'harvard' ? '  ·  ' : '  |  ';
-        children.push(new Paragraph({
+        experienceSection.push(new Paragraph({
           alignment: align,
           spacing: { before: index > 0 ? 160 : 0, after: 40 },
           tabStops: [{
@@ -250,13 +252,13 @@ async function generateDocx(data, locale, outputPath, templateKey = 'ats') {
 
       (experience.achievements || []).forEach(achievement => {
         if (isArabic) {
-          children.push(makeParagraph({
+          experienceSection.push(makeParagraph({
             spacing: { after: 30 },
             indent: { right: 720, hanging: 360 },
             children: [makeRun('\u2022  ' + achievement)]
           }));
         } else {
-          children.push(new Paragraph({
+          experienceSection.push(new Paragraph({
             alignment: align,
             numbering: { reference: 'cv-bullets', level: 0 },
             spacing: { after: 30 },
@@ -273,15 +275,15 @@ async function generateDocx(data, locale, outputPath, templateKey = 'ats') {
       });
     });
 
-    children.push(createSpacer());
+    experienceSection.push(createSpacer());
   }
 
   if (data.education.length > 0) {
-    children.push(createSectionHeading(locale.sections.education, { uppercase: preset.key === 'ats' }));
+    educationSection.push(createSectionHeading(locale.sections.education, { uppercase: preset.key === 'ats' }));
 
     data.education.forEach((education, index) => {
       if (isArabic) {
-        children.push(makeParagraph({
+        educationSection.push(makeParagraph({
           spacing: { before: index > 0 ? 160 : 0, after: 0 },
           children: [
             makeRun(education.degree, { bold: true, fontName: headingFont, color: preset.docx.nameColor })
@@ -290,19 +292,19 @@ async function generateDocx(data, locale, outputPath, templateKey = 'ats') {
 
         const dateText = [education.startDate, education.endDate].filter(Boolean).join(' - ');
         if (dateText) {
-          children.push(makeParagraph({
+          educationSection.push(makeParagraph({
             spacing: { after: 0 },
             children: [makeRun(dateText, { size: FONT_SIZES.small.docx, color: preset.docx.roleColor })]
           }));
         }
 
-        children.push(makeParagraph({
+        educationSection.push(makeParagraph({
           spacing: { after: 30 },
           children: [makeRun(education.institution)]
         }));
       } else {
         const separator = preset.key === 'harvard' ? '  ·  ' : '  |  ';
-        children.push(new Paragraph({
+        educationSection.push(new Paragraph({
           alignment: align,
           spacing: { before: index > 0 ? 160 : 0, after: 40 },
           tabStops: [{
@@ -334,7 +336,7 @@ async function generateDocx(data, locale, outputPath, templateKey = 'ats') {
       }
 
       if (education.details) {
-        children.push(makeParagraph({
+        educationSection.push(makeParagraph({
           spacing: { after: 30 },
           indent: isArabic ? { right: 360 } : { left: 360 },
           children: [
@@ -348,7 +350,28 @@ async function generateDocx(data, locale, outputPath, templateKey = 'ats') {
       }
     });
 
+    educationSection.push(createSpacer());
+  }
+
+  if (preset.key === 'ada') {
+    children.push(createAdaOverviewTable({
+      align,
+      bodyFont,
+      contactParts,
+      data,
+      headingFont,
+      isArabic,
+      locale,
+      mainSections: experienceSection.concat(educationSection),
+      makeFont,
+      makeParagraph,
+      makeRun,
+      preset
+    }));
     children.push(createSpacer());
+  } else {
+    experienceSection.forEach(block => children.push(block));
+    educationSection.forEach(block => children.push(block));
   }
 
   if (preset.key !== 'ada' && data.skills.length > 0) {
@@ -398,7 +421,7 @@ async function generateDocx(data, locale, outputPath, templateKey = 'ats') {
     children.push(makeParagraph({
       spacing: { after: SPACING.lineSpacing.docx },
       children: [
-        makeRun(data.languages.map(language => `${language.name} (${language.level})`).join('  \u2022  '))
+        makeRun(data.languages.map(language => formatLanguageLabel(language)).filter(Boolean).join('  \u2022  '))
       ]
     }));
   }
@@ -443,6 +466,7 @@ function createAdaOverviewTable({
   headingFont,
   isArabic,
   locale,
+  mainSections,
   makeParagraph,
   makeRun,
   preset
@@ -497,7 +521,7 @@ function createAdaOverviewTable({
       spacing: { after: 20 },
       children: [
         makeRun(
-          data.languages.map(language => `${language.name} (${language.level})`).join('  \u2022  '),
+          data.languages.map(language => formatLanguageLabel(language)).filter(Boolean).join('  \u2022  '),
           { color: sidebarTextColor, fontName: bodyFont }
         )
       ]
@@ -530,6 +554,10 @@ function createAdaOverviewTable({
       children: [makeRun(data.summary, { fontName: bodyFont })]
     }));
   }
+
+  (mainSections || []).forEach(section => {
+    mainChildren.push(section);
+  });
 
   const sidebarCell = new TableCell({
     width: { size: 34, type: WidthType.PERCENTAGE },

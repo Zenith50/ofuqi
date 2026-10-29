@@ -20,34 +20,45 @@ export default function PerformancePage() {
         <HoverActionButton href="/chat/new">{copy.performance.primaryAction}</HoverActionButton>
       </section>
 
-      <section className="library-summary-grid motion-slide-up motion-delay-1">
-        {copy.performance.stats.map((stat, index) => (
-          <article key={stat.label} className={`library-summary-card motion-slide-up motion-delay-${Math.min(index + 1, 3)}`}>
-            <strong>{stat.value}</strong>
-            <span>{stat.label}</span>
-          </article>
-        ))}
+      <section
+        className="library-section motion-slide-up motion-delay-1"
+        aria-label={copy.performance.headingLabel}
+      >
+        <div className="panel-stack">
+          {copy.performance.stats.map((stat) => (
+            <div key={stat.label} className="library-check-item">
+              <span className="library-check-dot" aria-hidden="true" />
+              <div className="library-card-copy">
+                <p className="library-card-role">{stat.label}</p>
+                <p className="library-card-summary">{stat.value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
-      <section className="library-utility-grid motion-slide-up motion-delay-2">
-        {copy.performance.columns.map((column) => (
-          <article key={column.title} className="library-utility-card library-utility-card--stacked">
-            <div>
+      {copy.performance.columns.map((column, index) => (
+        <section
+          key={column.title}
+          className={`library-section motion-slide-up motion-delay-${Math.min(index + 2, 4)}`}
+        >
+          <div className="library-section-head">
+            <div className="library-section-head-copy">
               <p className="workspace-label">{column.eyebrow}</p>
-              <h3>{column.title}</h3>
+              <h2>{column.title}</h2>
             </div>
+          </div>
 
-            <div className="panel-stack">
-              {column.items.map((item) => (
-                <div key={item} className="library-check-item">
-                  <span className="library-check-dot" aria-hidden="true" />
-                  <p>{item}</p>
-                </div>
-              ))}
-            </div>
-          </article>
-        ))}
-      </section>
+          <div className="panel-stack">
+            {column.items.map((item) => (
+              <div key={item} className="library-check-item">
+                <span className="library-check-dot" aria-hidden="true" />
+                <p>{item}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

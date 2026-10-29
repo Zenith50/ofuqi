@@ -1,5 +1,7 @@
 "use client";
 
+import { useId } from "react";
+
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
 import { getCopy } from "@/lib/app/content";
 
@@ -11,12 +13,22 @@ type LocaleToggleProps = {
 export default function LocaleToggle({ label, compact = false }: LocaleToggleProps) {
   const { locale, setLocale } = useAppLocale();
   const copy = getCopy(locale);
-  const ariaLabel = label ?? copy.common.languageToggleLabel;
+  const labelId = useId();
+  const hasVisibleLabel = Boolean(label);
 
   return (
     <div className={`locale-toggle ${compact ? "locale-toggle--compact" : ""}`}>
-      {label ? <span className="locale-toggle-label">{label}</span> : null}
-      <div className="locale-toggle-buttons" role="group" aria-label={ariaLabel}>
+      {hasVisibleLabel ? (
+        <span id={labelId} className="locale-toggle-label">
+          {label}
+        </span>
+      ) : null}
+      <div
+        className="locale-toggle-buttons"
+        role="group"
+        aria-labelledby={hasVisibleLabel ? labelId : undefined}
+        aria-label={hasVisibleLabel ? undefined : copy.common.languageToggleLabel}
+      >
         <button
           type="button"
           className={locale === "en" ? "active" : undefined}

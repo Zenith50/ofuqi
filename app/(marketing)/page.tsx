@@ -39,19 +39,39 @@ export default function LandingPage() {
                 {copy.landing.actions.secondary}
               </a>
             </div>
+            <ul className="spec-row">
+              {copy.landing.stats.map((stat) => (
+                <li key={stat.label} className="spec-chip">
+                  <strong>{stat.value}</strong>
+                  <span>{stat.label}</span>
+                </li>
+              ))}
+            </ul>
           </motion.div>
 
           <div className="hero-stage">
-            <SheetFrame templateKey="ats" sampleLocale={locale} className="sheet-frame--hero" />
+            <section className="instrument instrument--sheet" aria-label={copy.landing.heroCaptionRight}>
+              <header className="instrument-head">
+                <p className="instrument-kicker">{copy.landing.heroCaptionRight}</p>
+                <span className="badge badge--outline">{copy.landing.heroCaptionLeft}</span>
+              </header>
+              <div className="instrument-well instrument-well--sheet">
+                <SheetFrame templateKey="ats" sampleLocale={locale} className="sheet-frame--hero" />
+              </div>
+            </section>
           </div>
         </section>
 
         <section id="features" className="feature-strip">
           {copy.landing.features.map((feature) => (
-            <article key={feature.id} className="feature-card">
-              <p>{feature.id}</p>
-              <h2>{feature.title}</h2>
-              <p className="muted-copy">{feature.body}</p>
+            <article key={feature.id} className="card feature-card">
+              <header className="card-header">
+                <p className="instrument-kicker">{feature.id}</p>
+                <h2 className="card-title">{feature.title}</h2>
+              </header>
+              <div className="card-content">
+                <p className="card-description">{feature.body}</p>
+              </div>
             </article>
           ))}
         </section>
@@ -70,29 +90,31 @@ export default function LandingPage() {
               const templateKey = CV_TEMPLATE_KEYS[index] ?? "ats";
 
               return (
-                <article key={item.title} className="gallery-card">
+                <article key={item.title} className="card gallery-card">
                   <SheetFrame templateKey={templateKey} sampleLocale={locale} />
-                  <p>{item.id}</p>
-                  <h3>{item.title}</h3>
-                  <p>{item.body}</p>
+                  <div className="card-content">
+                    <span className="badge">{item.id}</span>
+                    <h3 className="card-title">{item.title}</h3>
+                    <p className="card-description">{item.body}</p>
+                  </div>
                 </article>
               );
             })}
           </div>
         </section>
 
-        <section className="cta-banner">
-          <div>
-            <p className="section-kicker">{copy.landing.cta.kicker}</p>
-            <h2>{copy.landing.cta.title}</h2>
-            <p>{copy.landing.cta.body}</p>
-          </div>
-          <div className="button-row">
+        <section className="card cta-banner">
+          <header className="card-header">
+            <p className="instrument-kicker">{copy.landing.cta.kicker}</p>
+            <h2 className="card-title">{copy.landing.cta.title}</h2>
+            <p className="card-description">{copy.landing.cta.body}</p>
+          </header>
+          <footer className="card-footer">
             <HoverActionButton href="/sign-in">{copy.landing.cta.primary}</HoverActionButton>
             <Link href="/dashboard" className="button-secondary">
               {copy.landing.cta.secondary}
             </Link>
-          </div>
+          </footer>
         </section>
       </main>
 

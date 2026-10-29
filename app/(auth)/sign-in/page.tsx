@@ -86,12 +86,12 @@ export default function SignInPage() {
   return (
     <div className="auth-shell">
       <motion.section
-        className="auth-card"
+        className="card auth-card"
         initial={reduced ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.24, ease: motionEase }}
       >
-        <header className="auth-card-header">
+        <header className="card-header">
           <SegmentedControl
             ariaLabel={copy.auth.kicker}
             value={step}
@@ -104,25 +104,26 @@ export default function SignInPage() {
               { value: "signUp", label: copy.auth.tabs.signUp },
             ]}
           />
-          <h1 className="auth-title">{title}</h1>
-          <p className="auth-subtitle">{subtitle}</p>
+          <h1 className="card-title auth-title">{title}</h1>
+          <p className="card-description">{subtitle}</p>
         </header>
 
-        <form className="auth-form" onSubmit={(event) => void handleSubmit(event)} noValidate aria-busy={pending}>
+        <form className="card-content field-group" onSubmit={(event) => void handleSubmit(event)} noValidate aria-busy={pending}>
           {error ? (
             <motion.div
               id="auth-error"
-              className="auth-error"
+              className="alert alert--destructive"
               role="alert"
               initial={reduced ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.16, ease: motionEase }}
             >
-              {error}
+              <p className="alert-title">{copy.auth.form.formAlertTitle}</p>
+              <p className="alert-description">{error}</p>
             </motion.div>
           ) : null}
 
-          <div className="field">
+          <div className="field" data-invalid={error ? true : undefined} data-disabled={pending ? true : undefined}>
             <label htmlFor="email">{copy.auth.form.emailLabel}</label>
             <div className="input-shell">
               <input
@@ -140,7 +141,7 @@ export default function SignInPage() {
             </div>
           </div>
 
-          <div className="field">
+          <div className="field" data-invalid={error ? true : undefined} data-disabled={pending ? true : undefined}>
             <label htmlFor="password">{copy.auth.form.passwordLabel}</label>
             <div className="input-shell">
               <input
@@ -171,7 +172,7 @@ export default function SignInPage() {
           </HoverActionButton>
         </form>
 
-        <div className="auth-footer">
+        <footer className="card-footer auth-footer">
           <button
             type="button"
             className="text-link"
@@ -182,16 +183,31 @@ export default function SignInPage() {
           >
             {step === "signIn" ? copy.auth.footer.switchToSignUp : copy.auth.footer.switchToSignIn}
           </button>
-        </div>
+        </footer>
       </motion.section>
 
       <aside className="auth-story">
-        <p className="section-kicker">{copy.auth.kicker}</p>
-        <p className="auth-story-title">
-          <span>{copy.auth.titleStart}</span> <span>{copy.auth.titleEnd}</span>
-        </p>
-        <p className="muted-copy">{copy.auth.lead}</p>
-        <SheetFrame templateKey="harvard" sampleLocale={locale} className="sheet-frame--auth" />
+        <section className="instrument instrument--sheet" aria-label={copy.auth.kicker}>
+          <header className="instrument-head">
+            <div className="instrument-head-copy">
+              <p className="instrument-kicker">{copy.auth.kicker}</p>
+              <p className="instrument-title">
+                <span>{copy.auth.titleStart}</span> <span>{copy.auth.titleEnd}</span>
+              </p>
+            </div>
+            <div className="instrument-head-tools">
+              {copy.auth.metrics.map((metric) => (
+                <span key={metric.label} className="badge badge--outline">
+                  {metric.value}
+                </span>
+              ))}
+            </div>
+          </header>
+          <div className="instrument-well instrument-well--sheet">
+            <SheetFrame templateKey="harvard" sampleLocale={locale} className="sheet-frame--auth" />
+          </div>
+          <p className="card-description auth-story-lead">{copy.auth.lead}</p>
+        </section>
       </aside>
     </div>
   );

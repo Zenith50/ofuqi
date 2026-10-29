@@ -62,7 +62,7 @@ export default function AppSidebar({
             aria-label={expanded ? undefined : label}
             onClick={onCloseMobile}
           >
-            <Icon size={16} strokeWidth={1.5} aria-hidden="true" />
+            <Icon size={16} strokeWidth={1.5} aria-hidden="true" data-icon="inline-start" />
             {expanded ? <span className="app-nav-label">{label}</span> : null}
           </Link>
         );
@@ -72,6 +72,7 @@ export default function AppSidebar({
 
   const renderCreate = (expanded: boolean) => expanded ? (
     <Link href="/chat/new" className="button-primary app-create" onClick={onCloseMobile}>
+      <Plus size={16} strokeWidth={1.5} aria-hidden="true" data-icon="inline-start" />
       {copy.dashboard.primaryAction}
     </Link>
   ) : (
@@ -101,8 +102,13 @@ export default function AppSidebar({
           </button>
         </div>
         {renderCreate(!collapsed)}
+        <div className="sidebar-separator" />
+        {collapsed ? null : <p className="sidebar-label">{copy.dashboard.navLabel}</p>}
         {renderNav(!collapsed)}
-        <AccountMenu key={collapsed ? "collapsed" : "open"} email={email} collapsed={collapsed} onSignOut={onSignOut} />
+        <div className="app-sidebar-foot">
+          <div className="sidebar-separator" />
+          <AccountMenu key={collapsed ? "collapsed" : "open"} email={email} collapsed={collapsed} onSignOut={onSignOut} />
+        </div>
       </aside>
 
       <AnimatePresence>
@@ -137,8 +143,13 @@ export default function AppSidebar({
                 </button>
               </div>
               {renderCreate(true)}
+              <div className="sidebar-separator" />
+              <p className="sidebar-label">{copy.dashboard.navLabel}</p>
               {renderNav(true)}
-              <AccountMenu email={email} collapsed={false} onSignOut={onSignOut} />
+              <div className="app-sidebar-foot">
+                <div className="sidebar-separator" />
+                <AccountMenu email={email} collapsed={false} onSignOut={onSignOut} />
+              </div>
             </motion.aside>
           </motion.div>
         ) : null}

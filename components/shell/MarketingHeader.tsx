@@ -29,7 +29,7 @@ export default function MarketingHeader() {
         </details>
         <div className="mkt-header-tools">
           <LocaleToggle compact />
-          <Link href="/sign-in" className="button-secondary">
+          <Link href="/sign-in" className="button-primary">
             {copy.common.accessStudio}
           </Link>
         </div>

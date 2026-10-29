@@ -4,14 +4,13 @@ import { memo, Suspense, useCallback, useEffect, useRef, useState, type ReactNod
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useMutation, useQuery } from "convex/react";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, MessageSquare, Send, X } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import CvPreview from "@/components/cv/CvPreview";
 import { useDialogLifecycle } from "@/components/shell/useDialog";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
 import EmptyState from "@/components/ui/EmptyState";
-import HoverActionButton from "@/components/ui/HoverActionButton";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { getCopy, type AppLocale } from "@/lib/app/content";
 import { buildExportJobs, type ExportFormatChoice, type ExportLanguageChoice } from "@/lib/cv/export";
@@ -98,10 +97,16 @@ function EditorStatus({
   action?: ReactNode;
 }) {
   return (
-    <div className="editor-status">
-      <h1>{title}</h1>
-      <p>{body}</p>
-      {action ?? null}
+    <div className="editor-shell">
+      <section className="instrument instrument--status">
+        <header className="instrument-head">
+          <h1 className="instrument-title">{title}</h1>
+        </header>
+        <div className="instrument-well instrument-well--pad">
+          <p className="instrument-note">{body}</p>
+          {action ?? null}
+        </div>
+      </section>
     </div>
   );
 }
@@ -109,9 +114,27 @@ function EditorStatus({
 function EditorLoading({ label, title }: { label: string; title: string }) {
   return (
     <div className="editor-shell editor-shell--loading" aria-busy="true">
-      <h1>{title}</h1>
-      <p role="status">{label}</p>
-      <div className="editor-skeleton" />
+      <div className="editor-layout">
+        <section className="instrument">
+          <header className="instrument-head">
+            <h1 className="instrument-title">{title}</h1>
+          </header>
+          <div className="instrument-well instrument-well--pad">
+            <p role="status">{label}</p>
+            <div className="skeleton skeleton-line" />
+            <div className="skeleton skeleton-line skeleton-line--short" />
+            <div className="skeleton skeleton-block" />
+          </div>
+        </section>
+        <section className="instrument" aria-hidden="true">
+          <header className="instrument-head">
+            <span className="skeleton skeleton-line skeleton-line--short" />
+          </header>
+          <div className="instrument-well instrument-well--pad">
+            <div className="skeleton skeleton-sheet" />
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
@@ -612,37 +635,14 @@ function NewChatPageContent() {
     && displayData.education.length === 0
     && displayData.skills.length === 0;
   const messages = session.messages;
+  const saveLabel = saveStatus === "saving"
+    ? copy.common.saving
+    : saveStatus === "saved"
+      ? copy.common.saved
+      : copy.chat.saveFailed;
 
   return (
     <div className="editor-shell">
-      <div className="editor-toolbar">
-        <h1>{copy.chat.conversationTitle}</h1>
-        {saveStatus === "idle" ? null : (
-          <p className={`editor-save-status editor-save-status--${saveStatus}`} role={saveStatus === "error" ? "alert" : "status"}>
-            {saveStatus === "saving" ? copy.common.saving : saveStatus === "saved" ? copy.common.saved : copy.chat.saveFailed}
-          </p>
-        )}
-      </div>
-
-      <AnimatePresence>
-        {notice ? (
-          <motion.div
-            key={notice}
-            className={noticeRole === "alert" ? "inline-notice inline-notice--alert" : "inline-notice"}
-            role={noticeRole}
-            initial={reduced ? false : { opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.16, ease: motionEase }}
-          >
-            <p>{notice}</p>
-            <button type="button" className="button-small" onClick={() => setNotice(null)}>
-              {copy.common.dismiss}
-            </button>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
       <div className="editor-pane-tabs" role="tablist" aria-label={copy.chat.paneTabsLabel}>
         <button
           type="button"
@@ -668,15 +668,65 @@ function NewChatPageContent() {
         </button>
       </div>
 
+      <AnimatePresence>
+        {notice ? (
+          <motion.div
+            key={notice}
+            className={noticeRole === "alert" ? "alert alert--destructive" : "alert"}
+            role={noticeRole}
+            initial={reduced ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16, ease: motionEase }}
+          >
+            <p className="alert-description">{notice}</p>
+            <button type="button" className="button-small" onClick={() => setNotice(null)}>
+              {copy.common.dismiss}
+            </button>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
       <div className="editor-layout" data-pane={mobilePane}>
         <section
           id="workspace-panel-write"
           role="tabpanel"
           aria-labelledby="workspace-tab-write"
-          className="editor-conversation-panel"
+          className="instrument instrument--transcript"
         >
-          <div className="editor-thread" role="log" aria-live="polite" aria-relevant="additions" ref={threadRef}>
-            {messages.map((message, index) => {
+          <header className="instrument-head">
+            <div className="instrument-head-copy">
+              <p className="instrument-kicker">{copy.chat.threadLabel}</p>
+              <h1 className="instrument-title">{copy.chat.conversationTitle}</h1>
+            </div>
+            <div className="instrument-head-tools">
+              {saveStatus === "idle" ? null : (
+                <span
+                  className={saveStatus === "error" ? "badge badge--destructive" : "badge badge--outline"}
+                  role={saveStatus === "error" ? "alert" : "status"}
+                >
+                  {saveLabel}
+                </span>
+              )}
+              <span className="badge badge--outline">{messages.length}</span>
+            </div>
+          </header>
+
+          <div className="instrument-well editor-thread" role="log" aria-live="polite" aria-relevant="additions" ref={threadRef}>
+            <div className="marker" role="separator">
+              <span>
+                {copy.dashboard.languageNames[session.draftData.language]}
+                {" · "}
+                {copy.dashboard.templateNames[project.shared.templateKey]}
+              </span>
+            </div>
+            {messages.length === 0 ? (
+              <EmptyState
+                icon={<MessageSquare size={18} aria-hidden="true" />}
+                title={copy.chat.threadEmptyTitle}
+                body={copy.chat.threadEmptyBody}
+              />
+            ) : messages.map((message, index) => {
               const isNewest = index === messages.length - 1;
               const label = message.role === "assistant"
                 ? draftCopy.chat.mockConversation.assistantLabel
@@ -684,131 +734,146 @@ function NewChatPageContent() {
               const body = message.seedKey
                 ? draftCopy.chat.mockConversation[message.seedKey]
                 : message.body;
-
-              const article = (
-                <>
-                  <span className="message-label">{label}</span>
-                  <div className={`message-bubble ${message.role}`} dir={message.language === "ar" ? "rtl" : "ltr"}>
-                    {body ? body : null}
-                    {isStreaming && isNewest && message.role === "assistant" ? (
-                      <span className="stream-line">
-                        <span className="stream-dot" aria-hidden="true" />
-                        {body ? null : <span className="sr-only">{copy.common.loadingWorkspace}</span>}
-                      </span>
-                    ) : null}
-                  </div>
-                </>
-              );
-
-              if (isNewest && !reduced) {
-                return (
-                  <motion.article
-                    key={`${message.role}-${index}`}
-                    className={`editor-message ${message.role === "user" ? "user" : "assistant"}`}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, ease: motionEase }}
-                  >
-                    {article}
-                  </motion.article>
-                );
-              }
+              const mark = message.role === "assistant" ? copy.common.brandMark : label.slice(0, 1);
 
               return (
-                <article
+                <motion.article
                   key={`${message.role}-${index}`}
-                  className={`editor-message ${message.role === "user" ? "user" : "assistant"}`}
+                  className={message.role === "user" ? "message message--user" : "message message--assistant"}
+                  initial={isNewest && !reduced ? { opacity: 0, y: 8 } : false}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, ease: motionEase }}
                 >
-                  {article}
-                </article>
+                  <span className="message-avatar" aria-hidden="true">{mark}</span>
+                  <div className="message-content">
+                    <span className="message-label">{label}</span>
+                    <div className={message.role === "user" ? "bubble bubble--user" : "bubble bubble--assistant"} dir={message.language === "ar" ? "rtl" : "ltr"}>
+                      {body ? <p className="bubble-content">{body}</p> : null}
+                      {isStreaming && isNewest && message.role === "assistant" ? (
+                        body ? (
+                          <span className="stream-line">
+                            <span className="stream-dot" aria-hidden="true" />
+                          </span>
+                        ) : (
+                          <span className="text-shimmer">{copy.common.loadingWorkspace}</span>
+                        )
+                      ) : null}
+                    </div>
+                  </div>
+                </motion.article>
               );
             })}
           </div>
 
-          <div className="editor-composer">
-            <div className="editor-chip-row">
-              {copy.chat.quickActions.map((action) => (
-                <button key={action} type="button" className="editor-chip-button" onClick={() => void applyInstruction(action)}>
-                  {action}
-                </button>
-              ))}
-            </div>
-            <div className="editor-input-shell">
-              <label htmlFor="workspace-composer">{copy.chat.composerLabel}</label>
-              <textarea
-                id="workspace-composer"
-                className="chat-input editor-textarea"
-                placeholder={copy.chat.composerPlaceholder}
-                value={composerValue}
-                onChange={handleComposerChange}
-                aria-describedby="composer-hint"
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                    if (!isStreaming) {
-                      void applyInstruction(composerValue);
-                    }
-                  }
-                }}
-                rows={3}
-              />
-              <div className="editor-composer-footer">
-                <div className={`editor-counter editor-counter--${composerTone}`}>
-                  <div className="editor-counter-topline">
-                    <span>{copy.chat.composerCounterLabel}</span>
-                    <strong>{characterCount}/{maxLength}</strong>
-                  </div>
-                  <div className="editor-counter-track" aria-hidden="true">
-                    <span style={{ transform: `scaleX(${Math.min(characterCount / maxLength, 1)})` }} />
-                  </div>
-                </div>
-                <HoverActionButton
-                  onClick={() => void applyInstruction(composerValue)}
-                  disabled={!composerValue.trim() || isExporting || isStreaming}
-                  className="editor-send-button"
-                >
-                  {copy.chat.send}
-                </HoverActionButton>
+          <footer className="instrument-foot">
+            <div className="field">
+              <p className="instrument-kicker" id="suggestion-label">{copy.chat.suggestionsLabel}</p>
+              <div className="suggestion-group" role="group" aria-labelledby="suggestion-label">
+                {copy.chat.quickActions.map((action) => (
+                  <button
+                    key={action}
+                    type="button"
+                    className="button-secondary"
+                    onClick={() => void applyInstruction(action)}
+                    disabled={isStreaming || isExporting}
+                  >
+                    {action}
+                  </button>
+                ))}
               </div>
             </div>
-            <p id="composer-hint" className="chat-composer-hint">{copy.chat.composerHint}</p>
-          </div>
+            <div className="field">
+              <label className="instrument-kicker" htmlFor="workspace-composer">{copy.chat.composerLabel}</label>
+              <div className="input-group">
+                <textarea
+                  id="workspace-composer"
+                  className="input-group-control"
+                  placeholder={copy.chat.composerPlaceholder}
+                  value={composerValue}
+                  onChange={handleComposerChange}
+                  aria-describedby="composer-hint"
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      if (!isStreaming) {
+                        void applyInstruction(composerValue);
+                      }
+                    }
+                  }}
+                  rows={3}
+                />
+                <div className="input-group-addon">
+                  <div className={`editor-counter editor-counter--${composerTone}`}>
+                    <div className="editor-counter-topline">
+                      <span>{copy.chat.composerCounterLabel}</span>
+                      <strong>{characterCount}/{maxLength}</strong>
+                    </div>
+                    <div className="editor-counter-track" aria-hidden="true">
+                      <span style={{ transform: `scaleX(${Math.min(characterCount / maxLength, 1)})` }} />
+                    </div>
+                  </div>
+                  <p id="composer-hint" className="composer-hint">{copy.chat.composerHint}</p>
+                  <button
+                    type="button"
+                    className="button-primary editor-send-button"
+                    onClick={() => void applyInstruction(composerValue)}
+                    disabled={!composerValue.trim() || isExporting || isStreaming}
+                  >
+                    {copy.chat.send}
+                    <Send size={16} strokeWidth={1.5} aria-hidden="true" data-icon="inline-end" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </footer>
         </section>
 
         <section
           id="workspace-panel-preview"
           role="tabpanel"
           aria-labelledby="workspace-tab-preview"
-          className="editor-preview-panel"
+          className="instrument instrument--preview"
         >
-          <div className="editor-pane-head">
-            <div>
-              <p className="workspace-label">{copy.chat.previewEyebrow}</p>
-              <h2 className="editor-pane-title">{copy.chat.sections.previewTitle}</h2>
+          <header className="instrument-head">
+            <div className="instrument-head-copy">
+              <p className="instrument-kicker">{copy.chat.previewEyebrow}</p>
+              <h2 className="instrument-title">{copy.chat.sections.previewTitle}</h2>
+              <p className="instrument-note">{copy.chat.sections.previewSubtitle}</p>
             </div>
-            <SegmentedControl
-              compact
-              ariaLabel={copy.chat.previewGroupLabel}
-              value={previewMode}
-              onChange={(mode) => void handlePreviewToggle(mode)}
-              options={[
-                { value: "source", label: copy.chat.previewOriginal },
-                { value: "translation", label: copy.chat.previewTranslation, disabled: isTranslating },
-              ]}
-            />
-            <button type="button" className="button-primary" onClick={() => setExportOpen(true)}>
-              <Download size={16} strokeWidth={1.5} aria-hidden="true" />
-              {copy.chat.exportOpen}
-            </button>
-          </div>
-          {isTranslating ? <p className="preview-status" role="status">{copy.chat.translating}</p> : null}
-          <div className="editor-preview-stage">
-            {previewIsEmpty && previewMode === "source" ? (
-              <EmptyState
-                icon={<FileText size={18} aria-hidden="true" />}
-                title={copy.chat.previewEmptyTitle}
-                body={copy.chat.previewEmptyBody}
+            <div className="instrument-head-tools">
+              <span className="badge">{copy.dashboard.templateNames[project.shared.templateKey]}</span>
+              <span className="badge badge--outline">{copy.dashboard.languageNames[displayData.language]}</span>
+              <SegmentedControl
+                compact
+                ariaLabel={copy.chat.previewGroupLabel}
+                value={previewMode}
+                onChange={(mode) => void handlePreviewToggle(mode)}
+                options={[
+                  { value: "source", label: copy.chat.previewOriginal },
+                  { value: "translation", label: copy.chat.previewTranslation, disabled: isTranslating },
+                ]}
               />
+              <button type="button" className="button-primary" onClick={() => setExportOpen(true)}>
+                <Download size={16} strokeWidth={1.5} aria-hidden="true" data-icon="inline-start" />
+                {copy.chat.exportOpen}
+              </button>
+            </div>
+          </header>
+          {isTranslating ? (
+            <p className="preview-status" role="status">
+              <span className="text-shimmer">{copy.chat.translating}</span>
+            </p>
+          ) : null}
+          <div className="instrument-well editor-preview-stage">
+            {previewIsEmpty ? (
+              <div className={`preview-plate preview-plate--${project.shared.templateKey}`}>
+                <EmptyState
+                  className="empty--on-paper"
+                  icon={<FileText size={18} aria-hidden="true" />}
+                  title={copy.chat.previewEmptyTitle}
+                  body={copy.chat.previewEmptyBody}
+                />
+              </div>
             ) : (
               <WorkspacePreview
                 data={displayData}
@@ -822,10 +887,10 @@ function NewChatPageContent() {
 
       <AnimatePresence>
         {exportOpen ? (
-          <motion.div key="export-dialog" className="export-overlay">
+          <motion.div key="export-dialog" className="dialog-overlay export-overlay">
             <motion.button
               type="button"
-              className="export-scrim"
+              className="dialog-scrim export-scrim"
               aria-label={copy.chat.closeExport}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -835,52 +900,64 @@ function NewChatPageContent() {
             />
             <motion.div
               ref={exportModalRef}
-              className="export-modal"
+              className="dialog"
               role="dialog"
               aria-modal="true"
               aria-labelledby="export-dialog-title"
+              aria-describedby="export-dialog-description"
               tabIndex={-1}
               initial={reduced ? false : { opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } }}
               transition={{ duration: 0.22, ease: motionEase }}
             >
-              <header className="export-header">
-                <h2 id="export-dialog-title">{copy.chat.exportTitle}</h2>
-                <p className="muted-copy">{copy.chat.exportBody}</p>
+              <header className="dialog-header">
+                <div>
+                  <h2 id="export-dialog-title" className="dialog-title">{copy.chat.exportTitle}</h2>
+                  <p id="export-dialog-description" className="dialog-description">{copy.chat.exportBody}</p>
+                </div>
               </header>
-              <section className="export-group">
-                <h3>{copy.exportDialog.formatTitle}</h3>
-                <SegmentedControl
-                  ariaLabel={copy.chat.exportFormatLabel}
-                  value={exportFormat === "docx" ? "docx" : "pdf"}
-                  onChange={setExportFormat}
-                  options={[
-                    { value: "pdf", label: copy.exportDialog.formatPdf },
-                    { value: "docx", label: copy.exportDialog.formatDocx },
-                  ]}
-                />
-              </section>
-              <section className="export-group">
-                <h3>{copy.exportDialog.languageTitle}</h3>
-                <SegmentedControl
-                  ariaLabel={copy.chat.exportLanguageLabel}
-                  value={exportLanguage}
-                  onChange={setExportLanguage}
-                  options={[
-                    { value: "active", label: copy.exportDialog.languageActive },
-                    { value: "both", label: copy.exportDialog.languageBoth },
-                  ]}
-                />
-              </section>
-              <div className="export-footer">
+              <div className="separator" />
+              <div className="dialog-body">
+                <fieldset className="field-set">
+                  <legend className="field-legend">{copy.exportDialog.formatTitle}</legend>
+                  <p className="field-description">{copy.chat.exportNotes.format}</p>
+                  <SegmentedControl
+                    ariaLabel={copy.chat.exportFormatLabel}
+                    value={exportFormat === "docx" ? "docx" : "pdf"}
+                    onChange={setExportFormat}
+                    options={[
+                      { value: "pdf", label: copy.exportDialog.formatPdf },
+                      { value: "docx", label: copy.exportDialog.formatDocx },
+                    ]}
+                  />
+                </fieldset>
+                <fieldset className="field-set">
+                  <legend className="field-legend">{copy.exportDialog.languageTitle}</legend>
+                  <p className="field-description">{copy.chat.exportNotes.language}</p>
+                  <SegmentedControl
+                    ariaLabel={copy.chat.exportLanguageLabel}
+                    value={exportLanguage}
+                    onChange={setExportLanguage}
+                    options={[
+                      { value: "active", label: copy.exportDialog.languageActive },
+                      { value: "both", label: copy.exportDialog.languageBoth },
+                    ]}
+                  />
+                </fieldset>
+              </div>
+              <div className="separator" />
+              <footer className="dialog-footer">
                 <button type="button" className="button-secondary" onClick={closeExport} disabled={isExporting}>
                   {copy.common.cancel}
                 </button>
                 <button type="button" className="button-primary" onClick={() => void handleExport()} disabled={isExporting}>
                   {isExporting ? copy.common.loadingExport : copy.chat.exportConfirm}
                 </button>
-              </div>
+              </footer>
+              <button type="button" className="app-icon-button dialog-close" onClick={closeExport} disabled={isExporting} aria-label={copy.chat.closeExport}>
+                <X size={16} strokeWidth={1.5} aria-hidden="true" />
+              </button>
             </motion.div>
           </motion.div>
         ) : null}

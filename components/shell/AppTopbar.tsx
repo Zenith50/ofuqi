@@ -28,6 +28,15 @@ export default function AppTopbar({
         : pathname.startsWith("/dashboard/settings")
           ? copy.dashboard.nav.settings
           : copy.dashboard.nav.library;
+  const kicker = pathname.startsWith("/chat")
+    ? copy.chat.workspaceKicker
+    : pathname.startsWith("/dashboard/templates")
+      ? copy.templates.headingLabel
+      : pathname.startsWith("/dashboard/performance")
+        ? copy.performance.headingLabel
+        : pathname.startsWith("/dashboard/settings")
+          ? copy.settings.headingLabel
+          : copy.dashboard.headingLabel;
   const showLocale = !pathname.startsWith("/dashboard/settings");
 
   return (
@@ -42,15 +51,18 @@ export default function AppTopbar({
       >
         <Menu size={16} strokeWidth={1.5} aria-hidden="true" />
       </button>
-      <motion.p
-        key={title}
-        className="app-topbar-title"
-        initial={reduced ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.16, ease: motionEase }}
-      >
-        {title}
-      </motion.p>
+      <div className="app-topbar-copy">
+        <p className="instrument-kicker">{kicker}</p>
+        <motion.p
+          key={title}
+          className="app-topbar-title"
+          initial={reduced ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.16, ease: motionEase }}
+        >
+          {title}
+        </motion.p>
+      </div>
       <div className="app-topbar-tools">
         {showLocale ? <LocaleToggle compact /> : null}
       </div>

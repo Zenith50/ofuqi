@@ -4,7 +4,7 @@ import { memo, Suspense, useCallback, useEffect, useRef, useState, type ReactNod
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useMutation, useQuery } from "convex/react";
-import { Download, FileText } from "lucide-react";
+import { Download } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import CvPreview from "@/components/cv/CvPreview";
@@ -783,8 +783,8 @@ function NewChatPageContent() {
         >
           <div className="editor-pane-head">
             <div>
-              <p className="workspace-label">{copy.chat.previewEyebrow}</p>
               <h2 className="editor-pane-title">{copy.chat.sections.previewTitle}</h2>
+              <p className="script-companion" lang={locale === "ar" ? "en" : "ar"} dir={locale === "ar" ? "ltr" : "rtl"}>{copy.chat.previewCompanion}</p>
             </div>
             <SegmentedControl
               compact
@@ -805,7 +805,7 @@ function NewChatPageContent() {
           <div className="editor-preview-stage">
             {previewIsEmpty && previewMode === "source" ? (
               <EmptyState
-                icon={<FileText size={18} aria-hidden="true" />}
+                spread
                 title={copy.chat.previewEmptyTitle}
                 body={copy.chat.previewEmptyBody}
               />

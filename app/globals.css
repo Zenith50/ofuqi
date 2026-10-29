@@ -1828,10 +1828,10 @@ html[dir="rtl"] .editor-counter-track span {
   }
 }
 
-@keyframes card-rise {
+@keyframes settle-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(-8px);
   }
 
   to {
@@ -1840,20 +1840,230 @@ html[dir="rtl"] .editor-counter-track span {
   }
 }
 
-.library-card-grid.is-entering > .library-card:nth-child(-n + 4) {
-  animation: card-rise 200ms var(--ease-out) both;
+@keyframes settle-in-ui {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-.library-card-grid.is-entering > .library-card:nth-child(2) {
-  animation-delay: 40ms;
+@keyframes settle-type {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+    filter: blur(2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
 }
 
-.library-card-grid.is-entering > .library-card:nth-child(3) {
+@keyframes settle-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.settle-ui,
+.settle-type,
+.settle-fade,
+.hero-copy > .section-kicker,
+.hero-copy > .hero-note,
+.feature-card > *,
+.gallery-header .section-kicker,
+.gallery-header h2,
+.gallery-lead,
+.gallery-card > :not(.sheet-frame),
+.cta-banner > div > *,
+.landing-footer > span,
+.mkt-links a,
+.mkt-disclosure summary,
+.mkt-disclosure nav a,
+.app-nav-label,
+.account-email,
+.library-hero-copy > *,
+.library-section-head-copy > *,
+.library-skeleton > p,
+.library-card-grid.is-entering > .library-card:nth-child(-n + 4) > :is(.library-card-copy, .library-card-facts),
+.empty-state__copy > *,
+.editor-status > h1,
+.editor-status > p,
+.editor-shell--loading > h1,
+.editor-shell--loading > p {
+  animation-timing-function: var(--ease-out);
+  animation-fill-mode: backwards;
+  animation-delay: var(--settle-delay, 0ms);
+}
+
+.settle-ui,
+.app-nav-label,
+.account-email,
+.library-hero-copy > *,
+.library-section-head-copy > *,
+.library-skeleton > p,
+.library-card-grid.is-entering > .library-card:nth-child(-n + 4) > :is(.library-card-copy, .library-card-facts),
+.empty-state__copy > *,
+.editor-status > h1,
+.editor-status > p,
+.editor-shell--loading > h1,
+.editor-shell--loading > p,
+.mkt-links a,
+.mkt-disclosure summary,
+.mkt-disclosure nav a {
+  animation-name: settle-in-ui;
+  animation-duration: 200ms;
+}
+
+.settle-type {
+  animation-name: settle-type;
+  animation-duration: 360ms;
+}
+
+.hero-title .settle-type,
+.auth-story-title .settle-type {
+  display: inline-block;
+}
+
+.auth-title.settle-type,
+.auth-story-title .settle-type {
+  animation-duration: 280ms;
+}
+
+.settle-fade {
+  animation-name: settle-fade;
+  animation-duration: var(--dur-micro);
+}
+
+.hero-copy > .section-kicker,
+.hero-copy > .hero-note,
+.feature-card > *,
+.gallery-header .section-kicker,
+.gallery-header h2,
+.gallery-lead,
+.gallery-card > :not(.sheet-frame),
+.cta-banner > div > *,
+.landing-footer > span {
+  animation-name: settle-in;
+  animation-duration: var(--dur-base);
+}
+
+.hero-copy > .section-kicker {
+  animation-delay: 0ms;
+}
+
+.hero-copy > .hero-note {
+  animation-delay: 180ms;
+}
+
+.feature-strip > .feature-card:nth-child(2) {
+  --settle-delay: 50ms;
+}
+
+.feature-strip > .feature-card:nth-child(3) {
+  --settle-delay: 100ms;
+}
+
+.gallery-header h2 {
+  animation-delay: 50ms;
+}
+
+.gallery-lead {
   animation-delay: 80ms;
 }
 
-.library-card-grid.is-entering > .library-card:nth-child(4) {
+.gallery-grid > .gallery-card:nth-child(1) {
+  --settle-delay: 40ms;
+}
+
+.gallery-grid > .gallery-card:nth-child(2) {
+  --settle-delay: 90ms;
+}
+
+.gallery-grid > .gallery-card:nth-child(3) {
+  --settle-delay: 140ms;
+}
+
+.cta-banner > div > :nth-child(2) {
+  animation-delay: 50ms;
+}
+
+.cta-banner > div > :nth-child(3) {
+  animation-delay: 100ms;
+}
+
+.landing-footer > span:nth-child(2) {
+  animation-delay: 40ms;
+}
+
+.mkt-links a:nth-child(2),
+.mkt-disclosure nav a:nth-child(2) {
+  animation-delay: 40ms;
+}
+
+.mkt-links a:nth-child(3),
+.mkt-disclosure nav a:nth-child(3) {
+  animation-delay: 80ms;
+}
+
+.app-nav-link:nth-child(2) .app-nav-label {
+  animation-delay: 40ms;
+}
+
+.app-nav-link:nth-child(3) .app-nav-label {
+  animation-delay: 80ms;
+}
+
+.app-nav-link:nth-child(4) .app-nav-label {
   animation-delay: 120ms;
+}
+
+.account-email {
+  animation-delay: 160ms;
+}
+
+.library-hero-copy > :nth-child(2),
+.library-section-head-copy > :nth-child(2),
+.empty-state__copy > :nth-child(2),
+.editor-status > p,
+.editor-shell--loading > p {
+  animation-delay: 40ms;
+}
+
+.library-hero-copy > :nth-child(3),
+.library-section-head-copy > :nth-child(3) {
+  animation-delay: 80ms;
+}
+
+.library-card-grid.is-entering > .library-card:nth-child(2) {
+  --settle-delay: 40ms;
+}
+
+.library-card-grid.is-entering > .library-card:nth-child(3) {
+  --settle-delay: 80ms;
+}
+
+.library-card-grid.is-entering > .library-card:nth-child(4) {
+  --settle-delay: 120ms;
+}
+
+.sheet-frame,
+.sheet-frame__scale,
+.preview-paper,
+.preview-stage-sheet,
+.cv-card-preview {
+  animation: none;
 }
 
 .library-card-grid.is-filtered-out {
@@ -1991,6 +2201,36 @@ html[dir="rtl"] .editor-counter-track span {
   .editor-chip-button:hover,
   .app-icon-button:active {
     transform: none !important;
+  }
+
+  .settle-ui,
+  .settle-type,
+  .settle-fade,
+  .hero-copy > .section-kicker,
+  .hero-copy > .hero-note,
+  .feature-card > *,
+  .gallery-header .section-kicker,
+  .gallery-header h2,
+  .gallery-lead,
+  .gallery-card > :not(.sheet-frame),
+  .cta-banner > div > *,
+  .landing-footer > span,
+  .mkt-links a,
+  .mkt-disclosure summary,
+  .mkt-disclosure nav a,
+  .app-nav-label,
+  .account-email,
+  .library-hero-copy > *,
+  .library-section-head-copy > *,
+  .library-skeleton > p,
+  .library-card-grid.is-entering > .library-card:nth-child(-n + 4) > :is(.library-card-copy, .library-card-facts),
+  .empty-state__copy > *,
+  .editor-status > h1,
+  .editor-status > p,
+  .editor-shell--loading > h1,
+  .editor-shell--loading > p {
+    animation: settle-fade 180ms var(--ease-out) backwards !important;
+    filter: none !important;
   }
 }
 /* UI comparison routes */

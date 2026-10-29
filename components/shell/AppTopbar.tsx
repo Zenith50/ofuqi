@@ -1,12 +1,10 @@
 "use client";
 
 import { Menu } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
 import LocaleToggle from "@/components/ui/LocaleToggle";
 import { getCopy } from "@/lib/app/content";
-import { motionEase } from "@/lib/ui/motion";
 
 export default function AppTopbar({
   menuOpen,
@@ -16,7 +14,6 @@ export default function AppTopbar({
   onOpenMenu: () => void;
 }) {
   const pathname = usePathname();
-  const reduced = useReducedMotion();
   const { locale } = useAppLocale();
   const copy = getCopy(locale);
   const title = pathname.startsWith("/chat")
@@ -42,15 +39,9 @@ export default function AppTopbar({
       >
         <Menu size={16} strokeWidth={1.5} aria-hidden="true" />
       </button>
-      <motion.p
-        key={title}
-        className="app-topbar-title"
-        initial={reduced ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.16, ease: motionEase }}
-      >
+      <p key={title} className="app-topbar-title settle-fade">
         {title}
-      </motion.p>
+      </p>
       <div className="app-topbar-tools">
         {showLocale ? <LocaleToggle compact /> : null}
       </div>

@@ -2,7 +2,6 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { motion, useReducedMotion } from "framer-motion";
 import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import SheetFrame from "@/components/cv/SheetFrame";
@@ -10,7 +9,7 @@ import { useAppLocale } from "@/components/providers/AppLocaleProvider";
 import HoverActionButton from "@/components/ui/HoverActionButton";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { getCopy } from "@/lib/app/content";
-import { motionEase } from "@/lib/ui/motion";
+import { settleDelay } from "@/lib/ui/motion";
 
 function getAuthErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
@@ -18,7 +17,6 @@ function getAuthErrorMessage(error: unknown) {
 
 export default function SignInPage() {
   const router = useRouter();
-  const reduced = useReducedMotion();
   const { locale } = useAppLocale();
   const copy = getCopy(locale);
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -85,12 +83,7 @@ export default function SignInPage() {
 
   return (
     <div className="auth-shell">
-      <motion.section
-        className="auth-card"
-        initial={reduced ? false : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.24, ease: motionEase }}
-      >
+      <section className="auth-card">
         <header className="auth-card-header">
           <SegmentedControl
             ariaLabel={copy.auth.kicker}
@@ -104,26 +97,19 @@ export default function SignInPage() {
               { value: "signUp", label: copy.auth.tabs.signUp },
             ]}
           />
-          <h1 className="auth-title">{title}</h1>
-          <p className="auth-subtitle">{subtitle}</p>
+          <h1 className="auth-title settle-type">{title}</h1>
+          <p className="auth-subtitle settle-ui" style={settleDelay(50)}>{subtitle}</p>
         </header>
 
         <form className="auth-form" onSubmit={(event) => void handleSubmit(event)} noValidate aria-busy={pending}>
           {error ? (
-            <motion.div
-              id="auth-error"
-              className="auth-error"
-              role="alert"
-              initial={reduced ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.16, ease: motionEase }}
-            >
+            <div id="auth-error" className="auth-error settle-ui" role="alert">
               {error}
-            </motion.div>
+            </div>
           ) : null}
 
           <div className="field">
-            <label htmlFor="email">{copy.auth.form.emailLabel}</label>
+            <label className="settle-ui" htmlFor="email" style={settleDelay(90)}>{copy.auth.form.emailLabel}</label>
             <div className="input-shell">
               <input
                 id="email"
@@ -141,7 +127,7 @@ export default function SignInPage() {
           </div>
 
           <div className="field">
-            <label htmlFor="password">{copy.auth.form.passwordLabel}</label>
+            <label className="settle-ui" htmlFor="password" style={settleDelay(130)}>{copy.auth.form.passwordLabel}</label>
             <div className="input-shell">
               <input
                 id="password"
@@ -174,7 +160,8 @@ export default function SignInPage() {
         <div className="auth-footer">
           <button
             type="button"
-            className="text-link"
+            className="text-link settle-ui"
+            style={settleDelay(160)}
             onClick={() => {
               setStep(step === "signIn" ? "signUp" : "signIn");
               setError(null);
@@ -183,14 +170,15 @@ export default function SignInPage() {
             {step === "signIn" ? copy.auth.footer.switchToSignUp : copy.auth.footer.switchToSignIn}
           </button>
         </div>
-      </motion.section>
+      </section>
 
       <aside className="auth-story">
-        <p className="section-kicker">{copy.auth.kicker}</p>
+        <p className="section-kicker settle-ui" style={settleDelay(40)}>{copy.auth.kicker}</p>
         <p className="auth-story-title">
-          <span>{copy.auth.titleStart}</span> <span>{copy.auth.titleEnd}</span>
+          <span className="settle-type" style={settleDelay(80)}>{copy.auth.titleStart}</span>{" "}
+          <span className="settle-type" style={settleDelay(130)}>{copy.auth.titleEnd}</span>
         </p>
-        <p className="muted-copy">{copy.auth.lead}</p>
+        <p className="muted-copy settle-ui" style={settleDelay(170)}>{copy.auth.lead}</p>
         <SheetFrame templateKey="harvard" sampleLocale={locale} className="sheet-frame--auth" />
       </aside>
     </div>

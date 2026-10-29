@@ -22,7 +22,7 @@ export default function TemplatesPage() {
         <HoverActionButton href="/chat/new">{copy.dashboard.primaryAction}</HoverActionButton>
       </section>
 
-      <section className="library-card-grid">
+      <section className="library-card-grid is-entering">
         {copy.templates.cards.map((card, index) => {
           const templateKey = CV_TEMPLATE_KEYS[index] ?? "ats";
 

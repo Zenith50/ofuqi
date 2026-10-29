@@ -32,10 +32,10 @@ export default function Reveal({
         stagger
           ? staggerContainer
           : {
-              hidden: { opacity: 0, y: 8 },
+              hidden: { opacity: 0, transform: "translateY(-8px)" },
               visible: {
                 opacity: 1,
-                y: 0,
+                transform: "translateY(0)",
                 transition: { ...productTransition, delay },
               },
             }

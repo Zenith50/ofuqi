@@ -36,7 +36,7 @@ import {
 } from "@/lib/cv/projects";
 import type { CvProjectTemplateKey } from "@/lib/cv/templates";
 import { deepMerge } from "@/lib/cv/workspace";
-import { motionEase } from "@/lib/ui/motion";
+import { motionEase, settleDelay, settleExit, settleTransition } from "@/lib/ui/motion";
 
 function useDebounce<T extends (...args: never[]) => void>(callback: T, delay: number) {
   const timeoutRef = useRef<number | null>(null);
@@ -616,7 +616,7 @@ function NewChatPageContent() {
   return (
     <div className="editor-shell">
       <div className="editor-toolbar">
-        <h1>{copy.chat.conversationTitle}</h1>
+        <h1 className="settle-ui">{copy.chat.conversationTitle}</h1>
         {saveStatus === "idle" ? null : (
           <p className={`editor-save-status editor-save-status--${saveStatus}`} role={saveStatus === "error" ? "alert" : "status"}>
             {saveStatus === "saving" ? copy.common.saving : saveStatus === "saved" ? copy.common.saved : copy.chat.saveFailed}
@@ -630,10 +630,10 @@ function NewChatPageContent() {
             key={notice}
             className={noticeRole === "alert" ? "inline-notice inline-notice--alert" : "inline-notice"}
             role={noticeRole}
-            initial={reduced ? false : { opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.16, ease: motionEase }}
+            initial={reduced ? false : { opacity: 0, transform: "translateY(-6px)" }}
+            animate={{ opacity: 1, transform: "translateY(0)" }}
+            exit={{ opacity: 0, transform: "translateY(-6px)", transition: settleExit }}
+            transition={settleTransition}
           >
             <p>{notice}</p>
             <button type="button" className="button-small" onClick={() => setNotice(null)}>
@@ -705,9 +705,9 @@ function NewChatPageContent() {
                   <motion.article
                     key={`${message.role}-${index}`}
                     className={`editor-message ${message.role === "user" ? "user" : "assistant"}`}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, ease: motionEase }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.15, ease: motionEase }}
                   >
                     {article}
                   </motion.article>
@@ -734,7 +734,7 @@ function NewChatPageContent() {
               ))}
             </div>
             <div className="editor-input-shell">
-              <label htmlFor="workspace-composer">{copy.chat.composerLabel}</label>
+              <label className="settle-ui" htmlFor="workspace-composer" style={settleDelay(80)}>{copy.chat.composerLabel}</label>
               <textarea
                 id="workspace-composer"
                 className="chat-input editor-textarea"
@@ -771,7 +771,7 @@ function NewChatPageContent() {
                 </HoverActionButton>
               </div>
             </div>
-            <p id="composer-hint" className="chat-composer-hint">{copy.chat.composerHint}</p>
+            <p id="composer-hint" className="chat-composer-hint settle-ui" style={settleDelay(120)}>{copy.chat.composerHint}</p>
           </div>
         </section>
 
@@ -782,7 +782,7 @@ function NewChatPageContent() {
           className="editor-preview-panel"
         >
           <div className="editor-pane-head">
-            <div>
+            <div className="settle-ui" style={settleDelay(40)}>
               <p className="workspace-label">{copy.chat.previewEyebrow}</p>
               <h2 className="editor-pane-title">{copy.chat.sections.previewTitle}</h2>
             </div>
@@ -840,10 +840,10 @@ function NewChatPageContent() {
               aria-modal="true"
               aria-labelledby="export-dialog-title"
               tabIndex={-1}
-              initial={reduced ? false : { opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } }}
-              transition={{ duration: 0.22, ease: motionEase }}
+              initial={reduced ? false : { opacity: 0, transform: "translateY(-6px)" }}
+              animate={{ opacity: 1, transform: "translateY(0)" }}
+              exit={{ opacity: 0, transform: "translateY(-6px)", transition: settleExit }}
+              transition={settleTransition}
             >
               <header className="export-header">
                 <h2 id="export-dialog-title">{copy.chat.exportTitle}</h2>

@@ -1,36 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
 import SheetFrame from "@/components/cv/SheetFrame";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
 import HoverActionButton from "@/components/ui/HoverActionButton";
 import TextShimmer from "@/components/ui/TextShimmer";
 import { getCopy } from "@/lib/app/content";
-import { motionEase } from "@/lib/ui/motion";
+import { settleDelay } from "@/lib/ui/motion";
 import { CV_TEMPLATE_KEYS } from "@/lib/cv/templates";
 
 export default function LandingPage() {
   const { locale } = useAppLocale();
   const copy = getCopy(locale);
-  const reduced = useReducedMotion();
 
   return (
     <>
       <main id="main">
         <section className="landing-hero">
-          <motion.div
-            className="hero-copy"
-            initial={reduced ? false : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.24, ease: motionEase }}
-          >
+          <div className="hero-copy">
             <p className="section-kicker">
               <TextShimmer>{copy.landing.kicker}</TextShimmer>
             </p>
             <h1 className="hero-title">
-              <span>{copy.landing.titleStart}</span>{" "}
-              <em>{copy.landing.titleEmphasis}</em>
+              <span className="settle-type" style={settleDelay(60)}>{copy.landing.titleStart}</span>{" "}
+              <em className="settle-type" style={settleDelay(120)}>{copy.landing.titleEmphasis}</em>
             </h1>
             <p className="hero-note">{copy.landing.lead}</p>
             <div className="button-row" id="studio">
@@ -39,7 +32,7 @@ export default function LandingPage() {
                 {copy.landing.actions.secondary}
               </a>
             </div>
-          </motion.div>
+          </div>
 
           <div className="hero-stage">
             <SheetFrame templateKey="ats" sampleLocale={locale} className="sheet-frame--hero" />

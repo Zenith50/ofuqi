@@ -179,10 +179,13 @@ export default function DashboardPage() {
             {libraryProjects.map((project) => {
               const matches = filteredProjects.some((item) => item.id === project.id);
               const displayVariant = project.variant;
+              const isLatest = filteredProjects[0]?.id === project.id;
 
               return (
-                <article key={project.id} className="library-card" hidden={!matches}>
-                  <SheetFrame data={displayVariant} templateKey={project.shared.templateKey} />
+                <article key={project.id} className={isLatest ? "library-card library-card--latest" : "library-card"} hidden={!matches}>
+                  <div className="desk-well">
+                    <SheetFrame data={displayVariant} templateKey={project.shared.templateKey} />
+                  </div>
                   <div className="library-card-facts">
                     <span className="meta-badge">
                       <span className="status-dot status-dot--accent" aria-hidden="true" />

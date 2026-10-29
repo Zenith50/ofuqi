@@ -28,7 +28,9 @@ export default function TemplatesPage() {
 
           return (
             <article key={card.title} className="library-card library-card--template">
-              <SheetFrame templateKey={templateKey} sampleLocale={locale} />
+              <div className="desk-well">
+                <SheetFrame templateKey={templateKey} sampleLocale={locale} />
+              </div>
               <div className="library-card-copy">
                 <div className="library-card-facts">
                   <span className="meta-badge">{card.tag}</span>

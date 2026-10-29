@@ -4,7 +4,9 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import SheetFrame from "@/components/cv/SheetFrame";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
+import DeskSlip from "@/components/ui/DeskSlip";
 import HoverActionButton from "@/components/ui/HoverActionButton";
+import SheetLife from "@/components/ui/SheetLife";
 import TextShimmer from "@/components/ui/TextShimmer";
 import { getCopy } from "@/lib/app/content";
 import { motionEase } from "@/lib/ui/motion";
@@ -42,7 +44,20 @@ export default function LandingPage() {
           </motion.div>
 
           <div className="hero-stage">
-            <SheetFrame templateKey="ats" sampleLocale={locale} className="sheet-frame--hero" />
+            <div className="desk-mat">
+              <DeskSlip label={copy.landing.heroCaptionLeft} detail={copy.landing.heroCaptionRight} />
+              <ul className="desk-stats">
+                {copy.landing.stats.map((stat) => (
+                  <li key={stat.label}>
+                    <strong>{stat.value}</strong>
+                    <span>{stat.label}</span>
+                  </li>
+                ))}
+              </ul>
+              <SheetLife key={locale}>
+                <SheetFrame templateKey="ats" sampleLocale={locale} className="sheet-frame--hero" />
+              </SheetLife>
+            </div>
           </div>
         </section>
 
@@ -71,7 +86,9 @@ export default function LandingPage() {
 
               return (
                 <article key={item.title} className="gallery-card">
-                  <SheetFrame templateKey={templateKey} sampleLocale={locale} />
+                  <div className="desk-well">
+                    <SheetFrame templateKey={templateKey} sampleLocale={locale} />
+                  </div>
                   <p>{item.id}</p>
                   <h3>{item.title}</h3>
                   <p>{item.body}</p>

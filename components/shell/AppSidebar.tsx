@@ -9,10 +9,31 @@ import AccountMenu from "@/components/shell/AccountMenu";
 import BrandLockup from "@/components/shell/BrandLockup";
 import { useDialogLifecycle } from "@/components/shell/useDialog";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
+import DeskSlip from "@/components/ui/DeskSlip";
 import { getCopy } from "@/lib/app/content";
-import { motionEase } from "@/lib/ui/motion";
+import { drawerEase, motionEase } from "@/lib/ui/motion";
 
 const navHrefs = ["/dashboard", "/dashboard/templates", "/dashboard/performance", "/dashboard/settings"] as const;
+
+function studioPlace(pathname: string, copy: ReturnType<typeof getCopy>) {
+  if (pathname.startsWith("/chat")) {
+    return copy.chat.headerTitle;
+  }
+
+  if (pathname.startsWith("/dashboard/templates")) {
+    return copy.dashboard.nav.templates;
+  }
+
+  if (pathname.startsWith("/dashboard/performance")) {
+    return copy.dashboard.nav.readiness;
+  }
+
+  if (pathname.startsWith("/dashboard/settings")) {
+    return copy.dashboard.nav.settings;
+  }
+
+  return copy.dashboard.nav.library;
+}
 
 export default function AppSidebar({
   collapsed,
@@ -34,7 +55,8 @@ export default function AppSidebar({
   const { dir, locale } = useAppLocale();
   const copy = getCopy(locale);
   const drawerRef = useRef<HTMLElement>(null);
-  const offscreen = dir === "rtl" ? "100%" : "-100%";
+  const place = studioPlace(pathname, copy);
+  const closedDrawer = dir === "rtl" ? "translateX(100%)" : "translateX(-100%)";
 
   useDialogLifecycle(mobileOpen, drawerRef, onCloseMobile);
 
@@ -100,6 +122,7 @@ export default function AppSidebar({
             {collapsed ? <ChevronsRight size={16} strokeWidth={1.5} aria-hidden="true" /> : <ChevronsLeft size={16} strokeWidth={1.5} aria-hidden="true" />}
           </button>
         </div>
+        {collapsed ? null : <DeskSlip label={copy.dashboard.navLabel} detail={place} />}
         {renderCreate(!collapsed)}
         {renderNav(!collapsed)}
         <AccountMenu key={collapsed ? "collapsed" : "open"} email={email} collapsed={collapsed} onSignOut={onSignOut} />
@@ -125,10 +148,14 @@ export default function AppSidebar({
               role="dialog"
               aria-modal="true"
               aria-label={copy.dashboard.navLabel}
-              initial={reduced ? false : { x: offscreen }}
-              animate={{ x: 0 }}
-              exit={{ x: offscreen, transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } }}
-              transition={{ duration: 0.24, ease: motionEase }}
+              initial={reduced ? false : { transform: closedDrawer }}
+              animate={reduced ? { opacity: 1 } : { transform: "translateX(0%)" }}
+              exit={
+                reduced
+                  ? { opacity: 0, transition: { duration: 0.16, ease: motionEase } }
+                  : { transform: closedDrawer, transition: { duration: 0.22, ease: motionEase } }
+              }
+              transition={{ duration: 0.42, ease: drawerEase }}
             >
               <div className="app-drawer-head">
                 <BrandLockup href="/dashboard" subtitle={false} />
@@ -136,6 +163,7 @@ export default function AppSidebar({
                   <X size={16} strokeWidth={1.5} aria-hidden="true" />
                 </button>
               </div>
+              <DeskSlip label={copy.dashboard.navLabel} detail={place} />
               {renderCreate(true)}
               {renderNav(true)}
               <AccountMenu email={email} collapsed={false} onSignOut={onSignOut} />

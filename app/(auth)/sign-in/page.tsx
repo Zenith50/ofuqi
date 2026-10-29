@@ -7,8 +7,10 @@ import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import SheetFrame from "@/components/cv/SheetFrame";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
+import DeskSlip from "@/components/ui/DeskSlip";
 import HoverActionButton from "@/components/ui/HoverActionButton";
 import SegmentedControl from "@/components/ui/SegmentedControl";
+import SheetLife from "@/components/ui/SheetLife";
 import { getCopy } from "@/lib/app/content";
 import { motionEase } from "@/lib/ui/motion";
 
@@ -92,6 +94,7 @@ export default function SignInPage() {
         transition={{ duration: 0.24, ease: motionEase }}
       >
         <header className="auth-card-header">
+          <DeskSlip label={copy.auth.kicker} detail={copy.common.emailPasswordAccess} />
           <SegmentedControl
             ariaLabel={copy.auth.kicker}
             value={step}
@@ -191,7 +194,19 @@ export default function SignInPage() {
           <span>{copy.auth.titleStart}</span> <span>{copy.auth.titleEnd}</span>
         </p>
         <p className="muted-copy">{copy.auth.lead}</p>
-        <SheetFrame templateKey="harvard" sampleLocale={locale} className="sheet-frame--auth" />
+        <div className="desk-mat">
+          <ul className="desk-stats">
+            {copy.auth.metrics.map((metric) => (
+              <li key={metric.label}>
+                <strong>{metric.value}</strong>
+                <span>{metric.label}</span>
+              </li>
+            ))}
+          </ul>
+          <SheetLife key={locale}>
+            <SheetFrame templateKey="harvard" sampleLocale={locale} className="sheet-frame--auth" />
+          </SheetLife>
+        </div>
       </aside>
     </div>
   );

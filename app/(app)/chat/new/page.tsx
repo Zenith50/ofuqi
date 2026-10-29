@@ -62,6 +62,14 @@ function readAssistantPayload(value: string) {
   }
 }
 
+function isBlankDraft(data: CvData) {
+  return !data.personal.fullName.trim()
+    && !data.summary.trim()
+    && data.experience.length === 0
+    && data.education.length === 0
+    && data.skills.length === 0;
+}
+
 function isAssistantUpdate(value: unknown): value is { _ofuqi_action: "update"; data: unknown } {
   return (
     value !== null
@@ -167,6 +175,8 @@ function NewChatPageContent() {
   const [exportLanguage, setExportLanguage] = useState<ExportLanguageChoice>("active");
   const [isExporting, setIsExporting] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [sheetArriving, setSheetArriving] = useState(false);
+  const [arrivalFrom, setArrivalFrom] = useState<number | null>(null);
   const exportModalRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const wasStreamingRef = useRef(false);
@@ -264,6 +274,8 @@ function NewChatPageContent() {
 
   const messageCount = session?.messages.length ?? 0;
   const latestMessageBody = session?.messages[messageCount - 1]?.body ?? "";
+  const seenMessageCount = useRef(messageCount);
+  const openedOnBlank = useRef<boolean | null>(null);
 
   useEffect(() => {
     const thread = threadRef.current;
@@ -280,6 +292,20 @@ function NewChatPageContent() {
     }
     wasStreamingRef.current = isStreaming;
   }, [isStreaming, latestMessageBody, messageCount, reduced, session]);
+
+  useEffect(() => {
+    const delta = messageCount - seenMessageCount.current;
+
+    if (delta > 0 && delta <= 2 && seenMessageCount.current > 0) {
+      // Message appends arrive from the chat stream, outside this render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- external stream append
+      setArrivalFrom(seenMessageCount.current);
+    } else if (delta < 0) {
+      setArrivalFrom(null);
+    }
+
+    seenMessageCount.current = messageCount;
+  }, [messageCount]);
 
   const applyInstruction = async (rawInstruction: string) => {
     if (!project || !session || isStreaming) {
@@ -568,6 +594,29 @@ function NewChatPageContent() {
       });
   };
 
+  const previewDraft = !session
+    ? null
+    : previewMode === "translation"
+      ? readFreshTranslationCache(
+        translationCache,
+        session.draftData,
+        session.draftData.language === "en" ? "ar" : "en",
+      ) ?? session.draftData
+      : session.draftData;
+  const previewBlank = previewDraft ? isBlankDraft(previewDraft) : true;
+
+  if (openedOnBlank.current === null && session) {
+    openedOnBlank.current = previewBlank;
+  }
+
+  if (openedOnBlank.current === true && !previewBlank && !sheetArriving && reduced === false) {
+    setSheetArriving(true);
+  }
+
+  if ((previewBlank || reduced === true) && sheetArriving) {
+    setSheetArriving(false);
+  }
+
   const projectMissing = Boolean(urlProjectId) && rawProject === null && Boolean(user) && !project;
 
   if (bootError === "create") {
@@ -606,11 +655,6 @@ function NewChatPageContent() {
   const targetTranslationLanguage = session.draftData.language === "en" ? "ar" : "en";
   const cachedTranslation = readFreshTranslationCache(translationCache, session.draftData, targetTranslationLanguage);
   const displayData = previewMode === "translation" && cachedTranslation ? cachedTranslation : session.draftData;
-  const previewIsEmpty = !displayData.personal.fullName.trim()
-    && !displayData.summary.trim()
-    && displayData.experience.length === 0
-    && displayData.education.length === 0
-    && displayData.skills.length === 0;
   const messages = session.messages;
 
   return (
@@ -678,15 +722,22 @@ function NewChatPageContent() {
           <div className="editor-thread" role="log" aria-live="polite" aria-relevant="additions" ref={threadRef}>
             {messages.map((message, index) => {
               const isNewest = index === messages.length - 1;
+              const isArriving = arrivalFrom !== null && index >= arrivalFrom;
               const label = message.role === "assistant"
                 ? draftCopy.chat.mockConversation.assistantLabel
                 : draftCopy.chat.mockConversation.userLabel;
               const body = message.seedKey
                 ? draftCopy.chat.mockConversation[message.seedKey]
                 : message.body;
+              const messageClass = [
+                "editor-message",
+                message.role === "user" ? "user" : "assistant",
+                isNewest ? "is-fresh" : "",
+                isArriving ? "is-arriving" : "",
+              ].filter(Boolean).join(" ");
 
-              const article = (
-                <>
+              return (
+                <article key={`${message.role}-${index}`} className={messageClass}>
                   <span className="message-label">{label}</span>
                   <div className={`message-bubble ${message.role}`} dir={message.language === "ar" ? "rtl" : "ltr"}>
                     {body ? body : null}
@@ -697,29 +748,6 @@ function NewChatPageContent() {
                       </span>
                     ) : null}
                   </div>
-                </>
-              );
-
-              if (isNewest && !reduced) {
-                return (
-                  <motion.article
-                    key={`${message.role}-${index}`}
-                    className={`editor-message ${message.role === "user" ? "user" : "assistant"}`}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, ease: motionEase }}
-                  >
-                    {article}
-                  </motion.article>
-                );
-              }
-
-              return (
-                <article
-                  key={`${message.role}-${index}`}
-                  className={`editor-message ${message.role === "user" ? "user" : "assistant"}`}
-                >
-                  {article}
                 </article>
               );
             })}
@@ -733,7 +761,7 @@ function NewChatPageContent() {
                 </button>
               ))}
             </div>
-            <div className="editor-input-shell">
+            <div className={composerValue.trim() ? "editor-input-shell is-drafting" : "editor-input-shell"}>
               <label htmlFor="workspace-composer">{copy.chat.composerLabel}</label>
               <textarea
                 id="workspace-composer"
@@ -803,19 +831,23 @@ function NewChatPageContent() {
           </div>
           {isTranslating ? <p className="preview-status" role="status">{copy.chat.translating}</p> : null}
           <div className="editor-preview-stage">
-            {previewIsEmpty && previewMode === "source" ? (
-              <EmptyState
-                icon={<FileText size={18} aria-hidden="true" />}
-                title={copy.chat.previewEmptyTitle}
-                body={copy.chat.previewEmptyBody}
-              />
-            ) : (
-              <WorkspacePreview
-                data={displayData}
-                templateKey={project.shared.templateKey}
-                veiled={isTranslating}
-              />
-            )}
+            <div className={previewBlank && previewMode === "source" ? "preview-sheet-slot is-blank" : "preview-sheet-slot"}>
+              {previewBlank && previewMode === "source" ? (
+                <EmptyState
+                  icon={<FileText size={18} aria-hidden="true" />}
+                  title={copy.chat.previewEmptyTitle}
+                  body={copy.chat.previewEmptyBody}
+                />
+              ) : (
+                <div className={sheetArriving ? "preview-sheet-ink is-arriving" : "preview-sheet-ink"}>
+                  <WorkspacePreview
+                    data={displayData}
+                    templateKey={project.shared.templateKey}
+                    veiled={isTranslating}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </section>
       </div>

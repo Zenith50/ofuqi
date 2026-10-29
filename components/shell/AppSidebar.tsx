@@ -47,7 +47,9 @@ export default function AppSidebar({
   ];
 
   const renderNav = (expanded: boolean) => (
-    <nav className="app-nav" aria-label={copy.dashboard.navLabel}>
+    <div className="app-nav-block">
+      {expanded ? <p className="app-nav-caption">{copy.dashboard.navLabel}</p> : null}
+      <nav className="app-nav" aria-label={copy.dashboard.navLabel}>
       {navHrefs.map((href, index) => {
         const active = href === "/dashboard" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
         const Icon = icons[index] ?? FileText;
@@ -67,7 +69,8 @@ export default function AppSidebar({
           </Link>
         );
       })}
-    </nav>
+      </nav>
+    </div>
   );
 
   const renderCreate = (expanded: boolean) => expanded ? (

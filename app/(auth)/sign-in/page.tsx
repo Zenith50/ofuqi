@@ -108,6 +108,15 @@ export default function SignInPage() {
           <p className="auth-subtitle">{subtitle}</p>
         </header>
 
+        <dl className="density-metrics">
+          {copy.auth.metrics.map((metric) => (
+            <div key={metric.label}>
+              <dt>{metric.label}</dt>
+              <dd>{metric.value}</dd>
+            </div>
+          ))}
+        </dl>
+
         <form className="auth-form" onSubmit={(event) => void handleSubmit(event)} noValidate aria-busy={pending}>
           {error ? (
             <motion.div
@@ -191,6 +200,17 @@ export default function SignInPage() {
           <span>{copy.auth.titleStart}</span> <span>{copy.auth.titleEnd}</span>
         </p>
         <p className="muted-copy">{copy.auth.lead}</p>
+        <ul className="density-rows">
+          {copy.auth.features.map((feature, index) => (
+            <li key={feature.id}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <span>
+                <strong>{feature.title}</strong>
+                {feature.body}
+              </span>
+            </li>
+          ))}
+        </ul>
         <SheetFrame templateKey="harvard" sampleLocale={locale} className="sheet-frame--auth" />
       </aside>
     </div>

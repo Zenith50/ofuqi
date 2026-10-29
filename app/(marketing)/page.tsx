@@ -5,7 +5,6 @@ import { motion, useReducedMotion } from "framer-motion";
 import SheetFrame from "@/components/cv/SheetFrame";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
 import HoverActionButton from "@/components/ui/HoverActionButton";
-import TextShimmer from "@/components/ui/TextShimmer";
 import { getCopy } from "@/lib/app/content";
 import { motionEase } from "@/lib/ui/motion";
 import { CV_TEMPLATE_KEYS } from "@/lib/cv/templates";
@@ -25,8 +24,11 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.24, ease: motionEase }}
           >
-            <p className="section-kicker">
-              <TextShimmer>{copy.landing.kicker}</TextShimmer>
+            <p className="section-kicker">{copy.landing.kicker}</p>
+            <p className="hero-caption">
+              <span>{copy.landing.heroCaptionLeft}</span>
+              <span aria-hidden="true">·</span>
+              <span>{copy.landing.heroCaptionRight}</span>
             </p>
             <h1 className="hero-title">
               <span>{copy.landing.titleStart}</span>{" "}
@@ -39,6 +41,22 @@ export default function LandingPage() {
                 {copy.landing.actions.secondary}
               </a>
             </div>
+            <dl className="density-metrics">
+              {copy.landing.stats.map((stat) => (
+                <div key={stat.label}>
+                  <dt>{stat.label}</dt>
+                  <dd>{stat.value}</dd>
+                </div>
+              ))}
+            </dl>
+            <ul className="density-rows">
+              {copy.landing.heroBullets.map((bullet, index) => (
+                <li key={bullet}>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  {bullet}
+                </li>
+              ))}
+            </ul>
           </motion.div>
 
           <div className="hero-stage">
@@ -49,7 +67,7 @@ export default function LandingPage() {
         <section id="features" className="feature-strip">
           {copy.landing.features.map((feature) => (
             <article key={feature.id} className="feature-card">
-              <p>{feature.id}</p>
+              <span className="meta-badge">{feature.id}</span>
               <h2>{feature.title}</h2>
               <p className="muted-copy">{feature.body}</p>
             </article>
@@ -72,9 +90,11 @@ export default function LandingPage() {
               return (
                 <article key={item.title} className="gallery-card">
                   <SheetFrame templateKey={templateKey} sampleLocale={locale} />
-                  <p>{item.id}</p>
-                  <h3>{item.title}</h3>
-                  <p>{item.body}</p>
+                  <div className="gallery-card-copy">
+                    <span className="meta-badge">{item.id}</span>
+                    <h3>{item.title}</h3>
+                    <p>{item.body}</p>
+                  </div>
                 </article>
               );
             })}
@@ -82,11 +102,16 @@ export default function LandingPage() {
         </section>
 
         <section className="cta-banner">
-          <div>
+          <div className="cta-banner-copy">
             <p className="section-kicker">{copy.landing.cta.kicker}</p>
             <h2>{copy.landing.cta.title}</h2>
             <p>{copy.landing.cta.body}</p>
           </div>
+          <ul className="library-specs">
+            {copy.landing.gallery.map((item) => (
+              <li key={item.id} className="meta-badge">{item.title}</li>
+            ))}
+          </ul>
           <div className="button-row">
             <HoverActionButton href="/sign-in">{copy.landing.cta.primary}</HoverActionButton>
             <Link href="/dashboard" className="button-secondary">

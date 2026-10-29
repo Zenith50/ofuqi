@@ -5,59 +5,81 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAppLocale } from "@/components/providers/AppLocaleProvider";
 import LocaleToggle from "@/components/ui/LocaleToggle";
+import StudioHeader from "@/components/ui/StudioHeader";
 import { getCopy } from "@/lib/app/content";
 
 export default function SettingsPage() {
   const { locale } = useAppLocale();
   const copy = getCopy(locale);
   const user = useQuery(api.users.current);
+  const sessionValue = user === undefined ? "…" : user?.email || copy.dashboard.accountLabel;
 
   return (
     <div className="library-page">
-      <section className="library-hero">
-        <div className="library-hero-copy">
-          <p className="workspace-label">{copy.settings.headingLabel}</p>
-          <h1 className="workspace-title">{copy.settings.headingTitle}</h1>
-          <p className="muted-copy workspace-heading-copy">{copy.settings.headingBody}</p>
+      <StudioHeader
+        label={copy.settings.headingLabel}
+        title={copy.settings.headingTitle}
+        body={copy.settings.headingBody}
+        meta={[
+          { label: copy.settings.localeEyebrow, value: copy.meta.languageName },
+          { label: copy.settings.accountEyebrow, value: sessionValue },
+          { label: copy.settings.exportEyebrow, value: copy.dashboard.meta.exportValue },
+        ]}
+      />
+
+      <section className="settings-board" aria-label={copy.settings.headingTitle}>
+        <div className="settings-field">
+          <div className="settings-field__copy">
+            <p className="workspace-label">{copy.settings.localeEyebrow}</p>
+            <h2>{copy.settings.localeTitle}</h2>
+            <p className="muted-copy">{copy.settings.localeBody}</p>
+          </div>
+          <div className="settings-field__control">
+            <LocaleToggle compact />
+          </div>
         </div>
-      </section>
 
-      <section className="settings-layout">
-        <article className="library-utility-card">
-          <p className="workspace-label">{copy.settings.localeEyebrow}</p>
-          <h2>{copy.settings.localeTitle}</h2>
-          <p className="muted-copy">{copy.settings.localeBody}</p>
-          <LocaleToggle label={copy.common.languageToggleLabel} />
-        </article>
+        <div className="density-separator" role="separator" />
 
-        <article className="library-utility-card">
-          <p className="workspace-label">{copy.settings.accountEyebrow}</p>
-          <h2>{copy.settings.accountTitle}</h2>
-          <p className="muted-copy">{copy.settings.accountBody}</p>
-          <p className="settings-account">
-            <span>{copy.settings.sessionEmailLabel}</span>
-            <strong>{user?.email ?? copy.dashboard.accountLabel}</strong>
-          </p>
-          <div className="button-row">
-            <Link href="/dashboard" className="button-secondary">
-              {copy.common.backToDashboard}
-            </Link>
-            <Link href="/chat/new" className="button-secondary">
-              {copy.common.openWorkspace}
-            </Link>
+        <div className="settings-field">
+          <div className="settings-field__copy">
+            <p className="workspace-label">{copy.settings.accountEyebrow}</p>
+            <h2>{copy.settings.accountTitle}</h2>
+            <p className="muted-copy">{copy.settings.accountBody}</p>
           </div>
-        </article>
+          <div className="settings-field__control">
+            <p className="settings-account-value">
+              <span>{copy.settings.sessionEmailLabel}</span>
+              <strong>{sessionValue}</strong>
+            </p>
+            <div className="settings-field__actions">
+              <Link href="/dashboard" className="button-secondary">
+                {copy.common.backToDashboard}
+              </Link>
+              <Link href="/chat/new" className="button-secondary">
+                {copy.common.openWorkspace}
+              </Link>
+            </div>
+          </div>
+        </div>
 
-        <article className="library-utility-card">
-          <p className="workspace-label">{copy.settings.exportEyebrow}</p>
-          <h2>{copy.settings.exportTitle}</h2>
-          <div className="prose-stack">
-            <p>{copy.settings.exportBody}</p>
-            {copy.settings.exportNotes.map((note) => (
-              <p key={note}>{note}</p>
+        <div className="density-separator" role="separator" />
+
+        <div className="settings-field settings-field--stack">
+          <div className="settings-field__copy">
+            <p className="workspace-label">{copy.settings.exportEyebrow}</p>
+            <h2>{copy.settings.exportTitle}</h2>
+            <p className="muted-copy">{copy.settings.exportBody}</p>
+          </div>
+          <ul className="density-rows">
+            {copy.settings.exportNotes.map((note, index) => (
+              <li key={note}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                {note}
+              </li>
             ))}
-          </div>
-        </article>
+          </ul>
+        </div>
       </section>
     </div>
   );

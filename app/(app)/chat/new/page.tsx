@@ -808,6 +808,7 @@ function NewChatPageContent() {
                 icon={<FileText size={18} aria-hidden="true" />}
                 title={copy.chat.previewEmptyTitle}
                 body={copy.chat.previewEmptyBody}
+                steps={copy.chat.previewEmptySteps}
               />
             ) : (
               <WorkspacePreview

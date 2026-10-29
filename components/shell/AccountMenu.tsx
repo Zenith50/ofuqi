@@ -49,7 +49,10 @@ export default function AccountMenu({
   if (!collapsed) {
     return (
       <div className="account-panel">
-        <p className="account-email">{label}</p>
+        <div className="account-identity">
+          <p className="account-email">{label}</p>
+          <p className="account-status">{copy.dashboard.accountStatus}</p>
+        </div>
         <button type="button" className="button-secondary account-signout" onClick={onSignOut}>
           {copy.common.signOut}
         </button>

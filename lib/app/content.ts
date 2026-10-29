@@ -58,7 +58,7 @@ export const appCopy = {
       titleStart: "Build the CV",
       titleEmphasis: "that opens doors",
       lead:
-        "A premium workspace for Arabic and English CVs, with live preview, guided editing, polished motion, and working PDF and DOCX export.",
+        "A studio for Arabic and English CVs, with a live preview and PDF and DOCX export.",
       actions: {
         primary: "Open the studio",
         secondary: "Explore templates",
@@ -88,17 +88,17 @@ export const appCopy = {
         {
           id: "02 / Workflow",
           title: "From sign-in to draft",
-          body: "The flow now takes you from landing to auth, into a CV library, and then into a focused workspace for writing and exporting.",
+          body: "Sign in, open your library, and shape the draft in the workspace.",
         },
         {
           id: "03 / Output",
-          title: "Real document export",
-          body: "The web experience triggers actual PDF and DOCX downloads through the same generation engine that already powers the CLI.",
+          title: "A file you can send",
+          body: "Export the finished draft as a PDF or a DOCX.",
         },
       ],
       galleryKicker: "Template direction",
       galleryTitle: "Curated formats",
-      galleryLead: "These directions shape the live product, not a separate reference deck.",
+      galleryLead: "The same career, set in three formats.",
       gallery: [
         {
           id: "ATS",
@@ -117,21 +117,21 @@ export const appCopy = {
         },
       ],
       cta: {
-        kicker: "Ready now",
-        title: "Test the live product now, then keep building the real data model next.",
-        body: "You can already validate the landing page, sign-in flow, locale switcher, dashboard, workspace interactions, and real export actions.",
-        primary: "Launch studio",
-        secondary: "Review dashboard",
+        kicker: "Start a draft",
+        title: "Open the studio and shape the CV on the page.",
+        body: "Write in English or Arabic, switch the preview, and export a PDF or DOCX when the draft is ready.",
+        primary: "Open the studio",
+        secondary: "Review your library",
       },
-      footerLeft: "Ofuqi - live product shell",
-      footerRight: "Arabic and English UI with working web export",
+      footerLeft: "Ofuqi",
+      footerRight: "English and Arabic CVs, with PDF and DOCX export.",
     },
     auth: {
       kicker: "Ofuqi workspace",
       titleStart: "Access",
       titleEnd: "the studio",
       lead:
-        "Sign in to enter the private workspace, move through the CV library, and test the bilingual editing and export flow end to end.",
+        "Sign in to open your library, edit a CV, and export it in English or Arabic.",
       metrics: [
         { value: "EN / AR", label: "Language modes" },
         { value: "PDF", label: "Live export" },
@@ -156,8 +156,8 @@ export const appCopy = {
       form: {
         signInTitle: "Welcome back",
         signUpTitle: "Create your account",
-        signInSubtitle: "Continue into the dashboard and open the live workspace.",
-        signUpSubtitle: "Create a private account and walk the current product flow yourself.",
+        signInSubtitle: "Open your library and continue a draft.",
+        signUpSubtitle: "Create an account and start your first CV.",
         emailLabel: "Email",
         passwordLabel: "Password",
         emailPlaceholder: "you@example.com",
@@ -176,7 +176,7 @@ export const appCopy = {
       errors: {
         exists: "That email already has an account. Switch to Sign In or use a different email.",
         invalid: "Account not found or invalid credentials. If you are new here, switch to Sign Up.",
-        backendOffline: "Authentication backend is offline. Start the local Convex server and try again.",
+        backendOffline: "Sign-in is unavailable right now. Try again in a moment.",
         failedPrefix: "Authentication failed:",
         required: "Enter your email and password.",
       },
@@ -216,7 +216,7 @@ export const appCopy = {
         readinessAction: "View readiness",
       },
       libraryTitle: "Your CV projects",
-      libraryBody: "Each card now represents one bilingual project with paired English and Arabic variants.",
+      libraryBody: "Each card is one CV, with its language, status, and template.",
       emptySearchTitle: "No matches",
       emptySearch: "No projects match that search yet.",
       emptyLibraryTitle: "Start your first CV",
@@ -279,7 +279,7 @@ export const appCopy = {
     templates: {
       headingLabel: "Template system",
       headingTitle: "Choose the template before you refine the wording.",
-      headingBody: "Each template now changes the live preview and exported files, so the workspace stays aligned with the format you choose from the start.",
+      headingBody: "The template you choose sets both the preview and the exported file.",
       cards: [
         {
           tag: "ATS-first",
@@ -307,9 +307,9 @@ export const appCopy = {
     },
     performance: {
       headingLabel: "Readiness",
-      headingTitle: "What the product already handles well.",
-      headingBody: "This page is readiness, not a scoreboard. It describes what the studio can already do. It does not report traffic, scores, or live KPIs.",
-      readinessNote: "Readiness is a description of the product. The marks below are capabilities, not metrics.",
+      headingTitle: "What you can do with a draft.",
+      headingBody: "This page is readiness, not a scoreboard. It describes the studio. It does not report traffic, scores, or live KPIs.",
+      readinessNote: "Readiness describes the studio. The notes below are capabilities, not metrics.",
       primaryAction: "Open workspace",
       stats: [
         { value: "Auth", label: "Private access" },
@@ -318,30 +318,30 @@ export const appCopy = {
       ],
       columns: [
         {
-          eyebrow: "Live now",
-          title: "What already works",
+          eyebrow: "Writing",
+          title: "A draft you can shape",
           items: [
-            "Private email/password entry is working through Convex Auth.",
-            "The interface changes direction and copy between English and Arabic.",
-            "The preview and export routes already produce real PDF and DOCX files.",
+            "Write the CV in English or Arabic.",
+            "The preview follows the language of the draft.",
+            "Switch templates without leaving the workspace.",
           ],
         },
         {
-          eyebrow: "Quality focus",
-          title: "What this surface is for",
+          eyebrow: "Export",
+          title: "A file you can send",
           items: [
-            "Keep the user journey clear while the real data layer is still being built.",
-            "Make export behavior, bilingual handling, and writing flow easy to understand.",
-            "Remove demo-flavored UI and keep only product-facing value.",
+            "PDF is ready to share.",
+            "DOCX stays editable.",
+            "Export the active language, or both.",
           ],
         },
         {
-          eyebrow: "Next steps",
-          title: "What comes after this redesign",
+          eyebrow: "Readiness",
+          title: "What this page is",
           items: [
-            "Persist real CV drafts, sessions, and versions in Convex.",
-            "Upgrade the workspace from local demo edits to stored structured CV data.",
-            "Refine export options and template selection around saved drafts.",
+            "Readiness describes the studio, not a score.",
+            "It does not count visits or draw performance charts.",
+            "Use it to see what a draft can become today.",
           ],
         },
       ],
@@ -349,7 +349,7 @@ export const appCopy = {
     settings: {
       headingLabel: "Settings",
       headingTitle: "Language, export, and session settings.",
-      headingBody: "This page keeps preferences calm and useful instead of treating them like placeholder cards.",
+      headingBody: "Choose the interface language, see the signed-in account, and review how export works.",
       primaryAction: "Return to workspace",
       localeEyebrow: "Interface",
       localeTitle: "Interface language",
@@ -532,7 +532,7 @@ export const appCopy = {
       titleStart: "اصنع",
       titleEmphasis: "سيرة تفتح لك الأبواب",
       lead:
-        "منصة احترافية تساعدك على بناء سيرة ذاتية بالعربية والإنجليزية، مع معاينة مباشرة، وحركة أنعم، وتصدير فعلي إلى PDF وDOCX.",
+        "استوديو للسير الذاتية بالعربية والإنجليزية، مع معاينة مباشرة وتصدير إلى PDF وDOCX.",
       actions: {
         primary: "افتح الاستوديو",
         secondary: "شاهد القوالب",
@@ -562,17 +562,17 @@ export const appCopy = {
         {
           id: "02 / التدفق",
           title: "من الدخول إلى المسودة",
-          body: "التجربة تنتقل الآن من الصفحة الرئيسية إلى تسجيل الدخول ثم إلى مكتبة السير الذاتية ومساحة العمل بشكل أوضح.",
+          body: "سجّل الدخول، وافتح مكتبتك، ثم شكّل المسودة داخل مساحة العمل.",
         },
         {
           id: "03 / الإخراج",
-          title: "تصدير مستندات حقيقي",
-          body: "تجربة الويب تشغّل تنزيلات PDF وDOCX فعليا عبر نفس محرك التوليد الموجود في المشروع.",
+          title: "ملف جاهز للإرسال",
+          body: "صدّر المسودة المكتملة بصيغة PDF أو DOCX.",
         },
       ],
       galleryKicker: "اتجاه القوالب",
       galleryTitle: "قوالب مختارة",
-      galleryLead: "هذه الاتجاهات أصبحت تؤثر على المنتج الحي، لا على ملف مراجع منفصل.",
+      galleryLead: "المسار المهني نفسه، في ثلاثة تنسيقات.",
       gallery: [
         {
           id: "ATS",
@@ -591,21 +591,21 @@ export const appCopy = {
         },
       ],
       cta: {
-        kicker: "جاهز الآن",
-        title: "جرّب المنتج الآن، ثم واصل بناء طبقة البيانات الحقيقية بعد ذلك.",
-        body: "يمكنك الآن اختبار الصفحة الرئيسية والدخول وتبديل اللغة ولوحة التحكم ومساحة العمل وأزرار التصدير الفعلية.",
-        primary: "شغّل الاستوديو",
-        secondary: "راجع لوحة التحكم",
+        kicker: "ابدأ مسودة",
+        title: "افتح الاستوديو وشكّل السيرة على الصفحة.",
+        body: "اكتب بالعربية أو الإنجليزية، بدّل المعاينة، ثم صدّر PDF أو DOCX عندما تجهز المسودة.",
+        primary: "افتح الاستوديو",
+        secondary: "راجع مكتبتك",
       },
-      footerLeft: "أُفُقي - واجهة المنتج الحالية",
-      footerRight: "واجهة عربية وإنجليزية مع تصدير فعلي من الويب",
+      footerLeft: "أُفُقي",
+      footerRight: "سير ذاتية بالعربية والإنجليزية، مع تصدير PDF وDOCX.",
     },
     auth: {
       kicker: "مساحة عمل أُفُقي",
       titleStart: "ادخل إلى",
       titleEnd: "الاستوديو",
       lead:
-        "سجل الدخول للدخول إلى مساحة العمل الخاصة، واستعراض مكتبة السير الذاتية، وتجربة الكتابة ثنائية اللغة والتصدير من البداية إلى النهاية.",
+        "سجّل الدخول لتفتح مكتبتك، وتعدّل سيرة، وتصدّرها بالعربية أو الإنجليزية.",
       metrics: [
         { value: "ع / EN", label: "أوضاع اللغة" },
         { value: "PDF", label: "تصدير مباشر" },
@@ -630,8 +630,8 @@ export const appCopy = {
       form: {
         signInTitle: "أهلا بعودتك",
         signUpTitle: "أنشئ حسابك",
-        signInSubtitle: "ادخل إلى لوحة التحكم وافتح مساحة العمل الحية.",
-        signUpSubtitle: "أنشئ حسابا خاصا وجرّب رحلة المنتج الحالية بنفسك.",
+        signInSubtitle: "افتح مكتبتك وتابع مسودة.",
+        signUpSubtitle: "أنشئ حسابا وابدأ سيرتك الأولى.",
         emailLabel: "البريد الإلكتروني",
         passwordLabel: "كلمة المرور",
         emailPlaceholder: "you@example.com",
@@ -650,7 +650,7 @@ export const appCopy = {
       errors: {
         exists: "هذا البريد لديه حساب بالفعل. انتقل إلى تسجيل الدخول أو استخدم بريدا آخر.",
         invalid: "الحساب غير موجود أو بيانات الدخول غير صحيحة. إذا كنت جديدا فانتقل إلى إنشاء حساب.",
-        backendOffline: "خدمة التحقق المحلية غير متصلة. شغّل خادم Convex المحلي ثم أعد المحاولة.",
+        backendOffline: "تعذر تسجيل الدخول الآن. حاول مرة أخرى بعد قليل.",
         failedPrefix: "فشل التحقق:",
         required: "أدخل البريد الإلكتروني وكلمة المرور.",
       },
@@ -690,7 +690,7 @@ export const appCopy = {
         readinessAction: "افتح الجاهزية",
       },
       libraryTitle: "مشاريع السير الذاتية",
-      libraryBody: "كل بطاقة تمثل الآن مشروعا ثنائيا واحدا يضم النسختين العربية والإنجليزية معا.",
+      libraryBody: "كل بطاقة سيرة واحدة، بلغتها وحالتها وقالبها.",
       emptySearchTitle: "لا توجد نتائج",
       emptySearch: "لا توجد مشاريع تطابق هذا البحث حاليا.",
       emptyLibraryTitle: "ابدأ سيرتك الأولى",
@@ -753,7 +753,7 @@ export const appCopy = {
     templates: {
       headingLabel: "نظام القوالب",
       headingTitle: "اختر القالب قبل أن تعمّق الصياغة.",
-      headingBody: "القالب يغيّر المعاينة الحية وملفات التصدير فعليا، حتى تبقى مساحة العمل مطابقة للشكل المهني الذي تختاره من البداية.",
+      headingBody: "القالب الذي تختاره يحدّد المعاينة والملف المصدَّر معا.",
       cards: [
         {
           tag: "موجّه للـ ATS",
@@ -781,9 +781,9 @@ export const appCopy = {
     },
     performance: {
       headingLabel: "الجاهزية",
-      headingTitle: "ما الذي يعالجه المنتج بشكل جيد الآن.",
-      headingBody: "هذه الصفحة للجاهزية وليست لوحة مؤشرات. تصف ما يستطيع الاستوديو فعله اليوم، ولا تعرض زيارات أو درجات أو مؤشرات أداء.",
-      readinessNote: "الجاهزية وصف للمنتج. العلامات أدناه قدرات، وليست قياسات.",
+      headingTitle: "ماذا تستطيع أن تفعل بالمسودة.",
+      headingBody: "هذه الصفحة للجاهزية وليست لوحة مؤشرات. تصف الاستوديو، ولا تعرض زيارات أو درجات أو مؤشرات أداء.",
+      readinessNote: "الجاهزية تصف الاستوديو. الملاحظات أدناه قدرات، وليست قياسات.",
       primaryAction: "افتح مساحة العمل",
       stats: [
         { value: "دخول", label: "وصول خاص" },
@@ -792,30 +792,30 @@ export const appCopy = {
       ],
       columns: [
         {
-          eyebrow: "يعمل الآن",
-          title: "ما الذي أصبح فعليا",
+          eyebrow: "الكتابة",
+          title: "مسودة يمكنك تشكيلها",
           items: [
-            "الدخول الخاص عبر البريد وكلمة المرور يعمل من خلال Convex Auth.",
-            "الواجهة تغيّر اللغة والاتجاه بين العربية والإنجليزية بشكل واضح.",
-            "المعاينة ومسار التصدير ينتجان ملفات PDF وDOCX حقيقية.",
+            "اكتب السيرة بالعربية أو الإنجليزية.",
+            "المعاينة تتبع لغة المسودة.",
+            "بدّل القالب من دون مغادرة مساحة العمل.",
           ],
         },
         {
-          eyebrow: "تركيز الجودة",
-          title: "فائدة هذه الصفحة",
+          eyebrow: "التصدير",
+          title: "ملف يمكنك إرساله",
           items: [
-            "توضيح ما ينجح اليوم من دون خلطه بشاشات تجريبية أو زخرفية.",
-            "جعل سلوك التصدير وثنائية اللغة ومسار الكتابة أوضح للمستخدم.",
-            "إزالة لغة العرض التقني الداخلي من الواجهة الموجّهة للمستخدم.",
+            "PDF جاهز للمشاركة.",
+            "DOCX يبقى قابلا للتعديل.",
+            "صدّر اللغة المفتوحة، أو اللغتين معا.",
           ],
         },
         {
-          eyebrow: "الخطوة التالية",
-          title: "ما الذي يأتي بعد هذا التصميم",
+          eyebrow: "الجاهزية",
+          title: "ما هذه الصفحة",
           items: [
-            "حفظ المسودات والجلسات والإصدارات الحقيقية داخل Convex.",
-            "ترقية مساحة العمل من تعديل محلي تجريبي إلى بيانات سيرة محفوظة ومنظمة.",
-            "تحسين خيارات التصدير وربط القوالب بالمسودات المحفوظة.",
+            "الجاهزية تصف الاستوديو، وليست درجة.",
+            "لا تعدّ الزيارات ولا ترسم مخططات أداء.",
+            "استخدمها لترى ما يمكن أن تصبح عليه المسودة اليوم.",
           ],
         },
       ],
@@ -823,7 +823,7 @@ export const appCopy = {
     settings: {
       headingLabel: "الإعدادات",
       headingTitle: "إعدادات اللغة والتصدير والجلسة.",
-      headingBody: "هذه الصفحة تبقي التفضيلات هادئة ومفيدة بدلا من أن تبدو كبطاقات تجريبية فقط.",
+      headingBody: "اختر لغة الواجهة، واطلع على الحساب المسجّل، وراجع كيف يعمل التصدير.",
       primaryAction: "العودة إلى مساحة العمل",
       localeEyebrow: "الواجهة",
       localeTitle: "لغة الواجهة",

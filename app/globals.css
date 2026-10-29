@@ -2253,6 +2253,10 @@ html[dir="rtl"] .auth-form .input-shell::after {
     height: min(520px, 62svh);
   }
 
+  .sheet-frame--hero .sheet-frame__scale {
+    transform: translateX(-50%) scale(0.4);
+  }
+
   .desk-mat {
     padding: var(--space-3);
   }

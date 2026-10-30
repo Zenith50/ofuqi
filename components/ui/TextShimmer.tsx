@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 
 type TextShimmerProps = {
   children: string;
@@ -13,13 +13,14 @@ type TextShimmerProps = {
 export default function TextShimmer({
   children,
   className,
-  duration = 2.4,
+  duration = 1.2,
   spread = 3,
 }: TextShimmerProps) {
   const reduced = useReducedMotion();
-  const classNames = ["text-shimmer", reduced ? "text-shimmer--static" : "", className].filter(Boolean).join(" ");
+  const [done, setDone] = useState(false);
+  const classNames = ["text-shimmer", reduced || done ? "text-shimmer--static" : "", className].filter(Boolean).join(" ");
 
-  if (reduced) {
+  if (reduced || done) {
     return <span className={classNames}>{children}</span>;
   }
 
@@ -28,7 +29,8 @@ export default function TextShimmer({
       className={classNames}
       initial={{ backgroundPosition: "100% center" }}
       animate={{ backgroundPosition: "0% center" }}
-      transition={{ repeat: Infinity, duration, ease: "linear" }}
+      onAnimationComplete={() => setDone(true)}
+      transition={{ duration, ease: "linear", repeat: 0 }}
       style={
         {
           "--text-shimmer-spread": `${Math.max(children.length * spread, 56)}px`,

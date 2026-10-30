@@ -16,6 +16,6 @@ test("protected routes redirect unauthenticated users to sign-in", async ({ page
   await page.goto("/dashboard");
 
   await expect(page).toHaveURL(/\/sign-in$/);
-  await expect(page.getByRole("heading", { level: 1, name: /Access|دخول|الاستوديو/i })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /Welcome back|أهلا بعودتك/i })).toBeVisible();
   await expect(page.getByLabel(/Email|البريد/i)).toBeVisible();
 });

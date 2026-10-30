@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useId } from "react";
+import { pillTransition } from "@/lib/ui/motion";
 
 type SegmentedOption<T extends string> = {
   value: T;
@@ -52,7 +53,7 @@ export default function SegmentedControl<T extends string>({
               <motion.span
                 layoutId={pillId}
                 className="choice-control__pill"
-                transition={{ type: "spring", stiffness: 380, damping: 32, mass: 0.6 }}
+                transition={pillTransition}
               />
             ) : null}
             <span className="choice-control__label">{option.label}</span>

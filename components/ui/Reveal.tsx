@@ -2,14 +2,13 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
-import { riseItem, riseTransition, staggerContainer } from "@/lib/ui/motion";
+import { productTransition, riseItem, staggerContainer } from "@/lib/ui/motion";
 
 type RevealProps = {
   children: ReactNode;
   className?: string;
   delay?: number;
   stagger?: boolean;
-  when?: "view" | "mount";
 };
 
 export default function Reveal({
@@ -17,7 +16,6 @@ export default function Reveal({
   className,
   delay = 0,
   stagger = false,
-  when = "view",
 }: RevealProps) {
   const reduced = useReducedMotion();
 
@@ -25,24 +23,20 @@ export default function Reveal({
     return <div className={className}>{children}</div>;
   }
 
-  const playback = when === "mount"
-    ? { animate: "visible" as const }
-    : { whileInView: "visible" as const, viewport: { once: true, amount: 0.15 } };
-
   return (
     <motion.div
       className={className}
       initial="hidden"
-      {...playback}
+      animate="visible"
       variants={
         stagger
           ? staggerContainer
           : {
-              hidden: { opacity: 0, y: 14 },
+              hidden: { opacity: 0, y: 8 },
               visible: {
                 opacity: 1,
                 y: 0,
-                transition: { ...riseTransition, delay },
+                transition: { ...productTransition, delay },
               },
             }
       }

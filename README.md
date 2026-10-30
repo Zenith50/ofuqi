@@ -1,124 +1,91 @@
-# Ofuqi (أُفُقي) – AI-Powered Bilingual CV Generator
+# Ofuqi (أُفُقي) — Bilingual AI CV Builder (English + Arabic)
 
-Ofuqi is a cutting-edge, bilingual (English + Arabic) CV/Resume builder powered by AI. It functions as an interactive career consultant that interviews users, gathers their professional history, and patches it into a beautifully formatted, ATS-friendly document in real time. 
+Ofuqi builds English and Arabic CVs through a chat interview. You describe your experience in plain language, an LLM turns it into structured CV data, and the CV preview updates as you talk. Finished CVs export to PDF and DOCX, with right-to-left layout for Arabic.
 
-Built on a modern stack featuring Next.js, Convex, and AI edge computing, the platform allows for seamless editing, automatic translations, and robust exports to PDF and DOCX.
+The repo has two parts:
 
-## 🌟 Key Features
+- **Web app** (Next.js + Convex): chat-driven CV studio with accounts, saved projects, translation, and export.
+- **CLI** (`src/`, plain Node.js): generates English or Arabic CVs as PDF and DOCX from an interactive prompt or a JSON file.
 
-*   **AI-Driven Conversational Builder:** Instead of filling out boring forms, users chat with "Ofuqi," an AI consultant that asks targeted questions and extracts professional metrics (powered by Llama 3 on Groq).
-*   **Real-time Live Preview:** As the user chats with the AI, the CV document updates dynamically on the screen reflecting the latest extracted details.
-*   **True Bilingual Support (EN & AR):** Built natively for RTL (Right-to-Left) languages. Users can swap the entire interface, generating CVs in English and Arabic perfectly.
-*   **Auto-Translation Engine:** Instantly translate a fully built English CV into Arabic (or vice versa) with a single click.
-*   **High-Fidelity Export:** Generates completely native, ATS-friendly `.docx` files and perfectly styled `.pdf` files.
-*   **Real-time Cloud Sync:** Data is saved automatically. If you close the tab and return, you pick up the conversation right where you left off.
+## Features
 
----
+**Web app**
+- **Chat interview → structured CV.** `/api/chat` sends the conversation to an LLM and patches the returned JSON into the CV, validated before it is saved.
+- **LLM fallback chain.** `lib/llm/router.ts` tries several Groq-hosted models in order (Llama 3.3 70B, GPT-OSS 120B, Qwen 3 32B, Llama 3.1 8B) and falls through when one fails.
+- **English ⇄ Arabic translation** of a finished CV (`/api/translate`), with a per-project translation cache.
+- **PDF and DOCX export** (`/api/export`): PDF rendered server-side with Puppeteer + `@sparticuz/chromium-min` (serverless-friendly), DOCX built natively with the `docx` library.
+- **RTL-aware UI and documents.** Arabic CVs use RTL layout, Arabic fonts (Tajawal / Amiri) and Unicode bidi isolation so emails, URLs and dates keep the right order inside Arabic text.
+- **Accounts and saved projects.** Convex Auth (password provider) with a per-user `cvProjects` table, real-time sync, dashboard, templates and settings pages.
 
-## 🛠️ Tech Stack & Architecture
+**CLI**
+- Interactive prompts (`@inquirer/prompts`) or `--from-json <file>` input.
+- English and Arabic HTML templates, rendered to PDF with Puppeteer and to DOCX with `docx`.
+- Bidi helper (`src/template/bidi.js`) that detects Arabic text and wraps mixed-direction strings in isolation marks.
+- Sample data in English and Arabic (`sample-data*.json`).
 
-### Frontend
-*   **Framework:** Next.js 16 (App Router) & React 19
-*   **Styling:** Custom CSS with CSS variables for deep RTL logical properties + Framer Motion for smooth animations.
-*   **State Management:** Convex React Hooks (subscribing to live database mutations).
+## Tech stack
 
-### Backend & Database
-*   **BaaS (Backend as a Service):** Convex (Serverless Database, Realtime Sync, Cloud Functions).
-*   **Authentication:** Convex Auth (`@convex-dev/auth`) handling JWT, sessions, and secure access boundaries.
-*   **AI Router:** Edge-runtime routing utilizing streaming APIs (Groq `llama-3.3-70b-versatile`).
+| Area | Tools |
+|---|---|
+| Frontend | Next.js 16 (App Router), React 19, TypeScript, Framer Motion |
+| Backend | Convex (database, real-time queries, functions), Convex Auth |
+| AI | Groq OpenAI-compatible API, multi-model fallback, JSON patching |
+| Documents | Puppeteer / `@sparticuz/chromium-min` (PDF), `docx` (Word) |
+| Quality | Vitest (unit), Playwright (E2E smoke), ESLint 9 with zero warnings |
+| Hosting | Vercel (with `@vercel/analytics`) |
 
-### Document Generation
-*   **PDF Export:** Uses `puppeteer-core` and `@sparticuz/chromium-min` to render semantic HTML to PDF server-side.
-*   **DOCX Export:** Uses the `docx` library to algorithmically build native Word documents.
-
-### Tooling
-*   **TypeScript:** Strict mode enabled across the entire repository.
-*   **Testing:** Vitest (Unit) and Playwright (E2E workflows).
-*   **Linting:** ESLint 9 (Flat config) with a zero-warnings policy.
-
----
-
-## 🚀 Getting Started locally
+## Getting started
 
 ### Prerequisites
-*   Node.js v20+ (v24 recommended)
-*   A Convex account
-*   Groq API Key (for LLM routing)
+- Node.js 20+
+- A [Convex](https://convex.dev) account
+- A [Groq](https://console.groq.com) API key
 
-### 1. Clone the repository
+### Install
 ```bash
 git clone https://github.com/Zenith50/ofuqi.git
 cd ofuqi
-```
-
-### 2. Install dependencies
-```bash
 npm install
 ```
 
-### 3. Environment Setup
-You'll need two sets of environment variables; one for Next.js, and one for Convex.
-
-**Create a `.env.local` file for Next.js:**
+### Configure
+Create `.env.local`:
 ```env
-NEXT_PUBLIC_CONVEX_URL="your-convex-deployment-url"
+NEXT_PUBLIC_CONVEX_URL=your-convex-deployment-url
 ```
+Then set these in your Convex deployment (`npx convex dashboard` → Settings → Environment Variables):
 
-**Set up your Convex Environment Variables:**
-Run the following to open the Convex dashboard:
+- `GROQ_API_KEY`: used by the LLM router
+- `SITE_URL`: e.g. `http://localhost:3000`
+- `JWT_PRIVATE_KEY`, `JWKS`: generate with `npx @convex-dev/auth`
+
+### Run
 ```bash
-npx convex dashboard
+npm run dev        # Next.js on :3000 + Convex dev
+npm run test:unit  # Vitest
+npm run test:e2e   # Playwright
+npm run lint
 ```
-Navigate to "Settings" -> "Environment Variables" and add:
-*   `GROQ_API_KEY`: Your Groq API key for the AI generation.
-*   `SITE_URL`: Usually `http://localhost:3000` for local dev.
-*   `AUTH_SECRET`: Generate a random string.
-*   `JWKS` & `JWT_PRIVATE_KEY`: Run `npx @convex-dev/auth` to generate production authentication keys.
 
-### 4. Run the Development Server
+### CLI only
 ```bash
-npm run dev
+npm run cli                                   # interactive
+node src/index.js --from-json sample-data-ar.json --format pdf
+node src/index.js -j sample-data.json -f both # PDF + DOCX into ./output
 ```
-This command runs both the Next.js frontend (`localhost:3000`) and syncs the Convex backend environment simultaneously.
 
----
-
-## 📦 Build & Deployment (Vercel)
-
-The application is configured to deploy seamlessly to Vercel.
-
-**Vercel Build Command:**
-```bash
-npx convex codegen && next build
-```
-*(Crucial: Convex types must be generated before Next builds the pages).*
-
-**Vercel Environment Variables:**
-Ensure that Vercel is injected with the production Convex URL and the necessary AI API keys so the edge functions do not fail.
-
----
-
-## 🏗️ Repository Structure
-
+## Project structure
 ```text
-├── app/                  # Next.js App Router (Pages, Layouts, API Routes)
-│   ├── (auth)/           # Authentication flows
-│   ├── api/              # AI Edge functions and Export webhooks
-│   ├── chat/new/         # The main AI interactive workspace
-│   └── dashboard/        # User project library and settings
-├── components/           # Shared React UI elements
-│   ├── cv/               # PDF/HTML Document layout structures
-│   ├── providers/        # Context Providers (Theme, Locale, Convex)
-│   └── ui/               # Reusable UI primitives (Buttons, Toggles)
-├── lib/                  # Core domain logic
-│   ├── app/              # Translation dictionaries and Site content
-│   ├── cv/               # Data transformations and export managers
-│   └── llm/              # LLM routing and JSON patching logic
-├── convex/               # Backend logic (Schema, Mutations, Queries)
-└── tests/                # Test suites (E2E with Playwright, Unit with Vitest)
+app/          Next.js routes: auth, chat, dashboard, compare, API (chat, translate, export)
+components/   CV document components, providers, UI primitives
+lib/          CV domain logic (validation, export, templates), LLM router, i18n content
+convex/       Schema, auth, projects and users functions
+src/          Standalone Node.js CLI (prompts, templates, PDF/DOCX generators)
+tests/        Vitest unit tests and Playwright E2E smoke test
 ```
 
-## 🐛 Bug Reports & Feature Requests
-To report a bug, please check the console logs (specifically for API export errors which log deeply in the server context) and file an issue on GitHub. 
+## Deploying to Vercel
+Build command: `npx convex codegen && next typegen && next build` (Convex types must be generated before the Next.js build). Set `NEXT_PUBLIC_CONVEX_URL` in Vercel and the AI and auth variables in Convex.
 
-See `CHANGELOG.md` for recent fixes and `ROADMAP.md` for upcoming features.
+## License
+[MIT](LICENSE) © 2026 Yousif Natiq

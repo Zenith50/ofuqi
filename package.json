@@ -37,7 +37,7 @@
     "arabic",
     "nextjs"
   ],
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@convex-dev/auth": "^0.0.92",
     "@fontsource-variable/manrope": "^5.2.8",
